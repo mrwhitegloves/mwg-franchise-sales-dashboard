@@ -32,7 +32,7 @@ export function SocketProvider({ children }) {
     socket.on("connect", () => {
       setState({ socket, status: "online" });
       // After a drop, refresh what we show (the server keeps everything)
-      if (wasDown) refresh(["Dashboard", "Leads", "Counts", "Unassigned", "Team", "Lead"]);
+      if (wasDown) refresh(["Dashboard", "Leads", "Counts", "Unassigned", "Team", "Lead", "Conversations", "Conversation"]);
       wasDown = false;
     });
     socket.on("disconnect", () => { wasDown = true; setState({ socket, status: "reconnecting" }); });
@@ -54,12 +54,24 @@ export function SocketProvider({ children }) {
       }
     });
     socket.on("lead_revoked", (p) => {
-      refresh(["Dashboard", "Leads", "Counts", { type: "Lead", id: p.leadId }]);
+      refresh(["Dashboard", "Leads", "Counts", "Conversations", "Conversation", { type: "Lead", id: p.leadId }]);
       toast.info(`${p.leadCode || p.name} was moved to another salesperson`);
       window.dispatchEvent(new CustomEvent("sales:lead-revoked", { detail: p.leadId }));
     });
     socket.on("team_lead_changed", (p) => refresh(["Leads", "Counts", "Unassigned", "Team", "Dashboard", { type: "Lead", id: p.leadId }]));
     socket.on("unassigned_lead", () => refresh(["Unassigned", "Team"]));
+    // Central WhatsApp (FS06): the server sends only chats of leads this user may see
+    const chatChanged = (p = {}) => refresh(["Conversations", ...(p.sessionId ? [{ type: "Conversation", id: p.sessionId }] : ["Conversation"])]);
+    ["wa_outbound_message", "wa_message_status", "wa_message_media", "wa_ai_control_changed", "wa_human_mode_message", "wa_lead_updated", "wa_follow_up_update"]
+      .forEach((ev) => socket.on(ev, chatChanged));
+    socket.on("wa_new_message", (p = {}) => {
+      chatChanged(p);
+      if (p.sessionId && window.location.pathname === `/whatsapp/${p.sessionId}`) return;   // already reading it
+      toast.message(`WhatsApp · ${p.leadName || "Prospect"}`, {
+        description: String(p.content || "New message").slice(0, 90),
+        action: p.sessionId ? { label: "Open", onClick: () => window.dispatchEvent(new CustomEvent("sales:open-chat", { detail: p.sessionId })) } : undefined,
+      });
+    });
     socket.on("force_logout", ({ reason } = {}) => {
       toast.error(reason === "deactivated" || reason === "suspended" ? "Your access was changed by an admin. Please sign in again." : "Session ended. Please sign in again.");
       dispatch(loggedOut());

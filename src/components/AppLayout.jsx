@@ -36,13 +36,16 @@ export function AppLayout() {
     };
     const onOpen = (e) => navigate(`/leads/${e.detail}`);
     const onCreate = () => setCreateOpen(true);
+    const onChat = (e) => navigate(`/whatsapp/${e.detail}`);
     window.addEventListener("keydown", onKey);
     window.addEventListener("sales:open-lead", onOpen);
     window.addEventListener("sales:create-lead", onCreate);
+    window.addEventListener("sales:open-chat", onChat);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("sales:open-lead", onOpen);
       window.removeEventListener("sales:create-lead", onCreate);
+      window.removeEventListener("sales:open-chat", onChat);
     };
   }, [navigate]);
 

@@ -17,6 +17,7 @@ const ComingSoonPage = lazy(() => import("@/features/misc/ComingSoonPage"));
 const UnassignedPage = lazy(() => import("@/features/control/UnassignedPage"));
 const TeamPage = lazy(() => import("@/features/control/TeamPage"));
 const TeamLeadsPage = lazy(() => import("@/features/control/TeamLeadsPage"));
+const WhatsAppPage = lazy(() => import("@/features/whatsapp/WhatsAppPage"));
 
 function Protected({ children }) {
   const token = useSelector(selectToken);
@@ -34,7 +35,8 @@ export default function App() {
         <Route path="leads" element={<Lazy><LeadsPage key="my" mode="my" /></Lazy>} />
         <Route path="hot-leads" element={<Lazy><LeadsPage key="hot" mode="hot" /></Lazy>} />
         <Route path="leads/:id" element={<Lazy><LeadDetailPage /></Lazy>} />
-        <Route path="whatsapp" element={<Lazy><ComingSoonPage title="WhatsApp" chapter="FS06" text="Your franchise conversations on the central MWG WhatsApp number — reply as Mr. White Gloves from here." /></Lazy>} />
+        <Route path="whatsapp" element={<Lazy><WhatsAppPage /></Lazy>} />
+        <Route path="whatsapp/:id" element={<Lazy><WhatsAppPage /></Lazy>} />
         <Route path="follow-ups" element={<Lazy><ComingSoonPage title="Follow-ups" chapter="FS08" text="Today / Overdue / Upcoming follow-ups with reminders and escalation." /></Lazy>} />
         <Route path="meetings" element={<Lazy><ComingSoonPage title="Meetings" chapter="FS08" text="Your franchise meetings and calendar. Meetings already booked show on each lead." /></Lazy>} />
         <Route path="proposals" element={<Lazy><ComingSoonPage title="Proposals" chapter="FS09" text="Create and send franchise proposals through the central WhatsApp." /></Lazy>} />

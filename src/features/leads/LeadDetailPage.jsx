@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PriorityBadge, ScoreBadge, StageBadge } from "@/components/LeadBits";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { useActivitiesQuery, useAddNoteMutation, useAssignmentHistoryQuery, useChangeStatusMutation, useLeadQuery } from "@/app/api";
+import { WhatsAppButton } from "@/features/whatsapp/WhatsAppButton";
 import { selectScope } from "@/app/authSlice";
 import { ago, dateOnly, dateTime, errorText, inr, prettyPhone, telLink } from "@/lib/format";
 import { EditLeadSheet } from "./EditLeadSheet";
@@ -86,7 +87,7 @@ export default function LeadDetailPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild size="sm"><a href={telLink(lead.phone)}><Phone className="mr-1 h-4 w-4" />Call</a></Button>
-            <Button size="sm" variant="outline" disabled title="WhatsApp from the central MWG number — coming in FS06"><MessageSquare className="mr-1 h-4 w-4" />WhatsApp</Button>
+            <WhatsAppButton leadId={lead.leadId} />
             <Button size="sm" variant="outline" onClick={() => setDialog("edit")}><Pencil className="mr-1 h-4 w-4" />Edit</Button>
             {lead.status !== "lost" && <Button size="sm" variant="outline" onClick={() => setDialog("stage")}><GitBranch className="mr-1 h-4 w-4" />Stage</Button>}
             {lead.status !== "lost"
@@ -197,7 +198,7 @@ export default function LeadDetailPage() {
         <TabsContent value="assignment"><AssignmentTab id={lead.leadId} /></TabsContent>
 
         <TabsContent value="soon">
-          <EmptyState icon={MessageSquare} title="Coming next" text="WhatsApp conversation (FS06), proposals and payments (FS09) will appear on this lead." />
+          <EmptyState icon={MessageSquare} title="Coming next" text="Proposals and payments (FS09) will appear on this lead. WhatsApp: use the WhatsApp button above." />
         </TabsContent>
       </Tabs>
 

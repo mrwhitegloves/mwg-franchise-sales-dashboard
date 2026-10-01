@@ -11,14 +11,14 @@ import {
 } from "@/components/ui/sidebar";
 import { selectScope } from "@/app/authSlice";
 import { hasSalesRole } from "@/lib/roles";
-import { useLeadCountsQuery } from "@/app/api";
+import { useConversationsQuery, useLeadCountsQuery } from "@/app/api";
 
 // §6 — only what a salesperson needs; nothing from the admin dashboard
 const MAIN = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "My Leads", url: "/leads", icon: Users },
   { title: "Hot Leads", url: "/hot-leads", icon: Flame, badge: "hot" },
-  { title: "WhatsApp", url: "/whatsapp", icon: MessagesSquare, soon: true },
+  { title: "WhatsApp", url: "/whatsapp", icon: MessagesSquare, badge: "unread" },
   { title: "Follow-ups", url: "/follow-ups", icon: CalendarClock, soon: true },
   { title: "Meetings", url: "/meetings", icon: CalendarDays, soon: true },
   { title: "Proposals", url: "/proposals", icon: FileText, soon: true },
@@ -43,7 +43,7 @@ function Item({ item, badge, active }) {
           {item.soon && <span className="ml-auto rounded bg-muted px-1.5 text-[10px] text-muted-foreground">soon</span>}
         </NavLink>
       </SidebarMenuButton>
-      {badge ? <SidebarMenuBadge className="bg-orange-500 text-white">{badge}</SidebarMenuBadge> : null}
+      {badge ? <SidebarMenuBadge className={item.badge === "unread" ? "bg-emerald-500 text-white" : "bg-orange-500 text-white"}>{badge}</SidebarMenuBadge> : null}
     </SidebarMenuItem>
   );
 }
@@ -51,6 +51,7 @@ function Item({ item, badge, active }) {
 export function AppSidebar() {
   const scope = useSelector(selectScope);
   const { data } = useLeadCountsQuery(undefined, { pollingInterval: 0 });
+  const { data: wa } = useConversationsQuery({ limit: 1 });
   const isManager = hasSalesRole(scope, "MANAGER");
   const { pathname } = useLocation();
   const current = activeNavUrl(pathname, [...MAIN, ...(isManager ? CONTROL : [])].map((i) => i.url));
@@ -69,7 +70,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {MAIN.map((item) => <Item key={item.url} item={item} active={current === item.url} badge={item.badge === "hot" && data?.counts?.hot ? data.counts.hot : null} />)}
+              {MAIN.map((item) => <Item key={item.url} item={item} active={current === item.url} badge={item.badge === "hot" ? data?.counts?.hot || null : item.badge === "unread" ? wa?.counts?.unread || null : null} />)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

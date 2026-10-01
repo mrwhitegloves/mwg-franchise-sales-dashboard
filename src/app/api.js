@@ -56,6 +56,38 @@ export const salesApi = baseApi.injectEndpoints({
     }),
     bulkAssign: b.mutation({ query: (body) => ({ url: "/leads/bulk-assign", method: "POST", body }), invalidatesTags: LIST_TAGS }),
     assignmentSettings: b.query({ query: () => "/assignment-rules", providesTags: ["Settings"] }),
+
+    // ── central WhatsApp (FS06) ───────────────────────────
+    conversations: b.query({ query: (params = {}) => ({ url: "/whatsapp", params }), providesTags: ["Conversations"] }),
+    conversation: b.query({
+      query: ({ id, before, limit }) => ({ url: `/whatsapp/${id}`, params: { before, limit } }),
+      providesTags: (r, e, { id }) => [{ type: "Conversation", id }],
+    }),
+    leadConversation: b.query({ query: (leadId) => `/leads/${leadId}/conversation`, providesTags: (r, e, id) => [{ type: "Lead", id }] }),
+    startConversation: b.mutation({
+      query: (leadId) => ({ url: `/leads/${leadId}/conversation`, method: "POST" }),
+      invalidatesTags: (r, e, leadId) => [{ type: "Lead", id: leadId }, "Conversations"],
+    }),
+    waTemplates: b.query({ query: () => "/whatsapp/templates", keepUnusedDataFor: 600 }),
+    sendWhatsapp: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/whatsapp/${id}/send`, method: "POST", body }),
+      invalidatesTags: (r, e, { id }) => [{ type: "Conversation", id }, "Conversations"],
+    }),
+    sendWhatsappFile: b.mutation({
+      query: ({ id, file, caption, replyToMessageId }) => {
+        const body = new FormData();
+        body.append("file", file);
+        if (caption) body.append("caption", caption);
+        if (replyToMessageId) body.append("replyToMessageId", replyToMessageId);
+        return { url: `/whatsapp/${id}/send-media`, method: "POST", body };
+      },
+      invalidatesTags: (r, e, { id }) => [{ type: "Conversation", id }, "Conversations"],
+    }),
+    sendWhatsappTemplate: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/whatsapp/${id}/send-template`, method: "POST", body }),
+      invalidatesTags: (r, e, { id }) => [{ type: "Conversation", id }, "Conversations"],
+    }),
+    markConversationRead: b.mutation({ query: (id) => ({ url: `/whatsapp/${id}/mark-read`, method: "POST" }), invalidatesTags: ["Conversations"] }),
   }),
 });
 
@@ -66,4 +98,6 @@ export const {
   useLeadEditQuery, useEditDetailsMutation,
   useTeamQuery, useUpdateTeamMemberMutation, useUnassignedQuery, useAssignLeadMutation, useReassignLeadMutation, useBulkAssignMutation,
   useAssignmentSettingsQuery,
+  useConversationsQuery, useConversationQuery, useLazyConversationQuery, useLeadConversationQuery, useStartConversationMutation, useWaTemplatesQuery,
+  useSendWhatsappMutation, useSendWhatsappFileMutation, useSendWhatsappTemplateMutation, useMarkConversationReadMutation,
 } = salesApi;
