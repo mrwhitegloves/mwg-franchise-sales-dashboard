@@ -87,6 +87,14 @@ export const salesApi = baseApi.injectEndpoints({
       query: ({ id, ...body }) => ({ url: `/whatsapp/${id}/send-template`, method: "POST", body }),
       invalidatesTags: (r, e, { id }) => [{ type: "Conversation", id }, "Conversations"],
     }),
+    // AI + human (FS07)
+    setChatMode: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/whatsapp/${id}/mode`, method: "POST", body }),
+      invalidatesTags: (r, e, { id }) => [{ type: "Conversation", id }, "Conversations", "Insights"],
+    }),
+    chatInsights: b.query({ query: (id) => `/whatsapp/${id}/insights`, providesTags: (r, e, id) => [{ type: "Insights", id }] }),
+    leadInsights: b.query({ query: (leadId) => `/leads/${leadId}/insights`, providesTags: (r, e, id) => [{ type: "Insights", id }] }),
+    suggestReplies: b.mutation({ query: ({ id, refresh }) => ({ url: `/whatsapp/${id}/suggest`, method: "POST", body: { refresh: !!refresh } }) }),
     markConversationRead: b.mutation({ query: (id) => ({ url: `/whatsapp/${id}/mark-read`, method: "POST" }), invalidatesTags: ["Conversations"] }),
   }),
 });
@@ -100,4 +108,5 @@ export const {
   useAssignmentSettingsQuery,
   useConversationsQuery, useConversationQuery, useLazyConversationQuery, useLeadConversationQuery, useStartConversationMutation, useWaTemplatesQuery,
   useSendWhatsappMutation, useSendWhatsappFileMutation, useSendWhatsappTemplateMutation, useMarkConversationReadMutation,
+  useSetChatModeMutation, useChatInsightsQuery, useLeadInsightsQuery, useSuggestRepliesMutation,
 } = salesApi;

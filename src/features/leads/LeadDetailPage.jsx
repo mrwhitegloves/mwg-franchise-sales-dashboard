@@ -14,11 +14,19 @@ import { EmptyState, PriorityBadge, ScoreBadge, StageBadge } from "@/components/
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { useActivitiesQuery, useAddNoteMutation, useAssignmentHistoryQuery, useChangeStatusMutation, useLeadQuery } from "@/app/api";
 import { WhatsAppButton } from "@/features/whatsapp/WhatsAppButton";
+import { InsightsPanel } from "@/features/whatsapp/InsightsPanel";
+import { useLeadInsightsQuery } from "@/app/api";
 import { selectScope } from "@/app/authSlice";
 import { ago, dateOnly, dateTime, errorText, inr, prettyPhone, telLink } from "@/lib/format";
 import { EditLeadSheet } from "./EditLeadSheet";
 import { LostDialog, ReassignDialog, StageDialog } from "./LeadActions";
 import { cn } from "@/lib/utils";
+
+// FS07: §22 qualification details + §30 conversation summary (same panel as next to the chat)
+function LeadInsightsCard({ leadId }) {
+  const { data, isLoading, error } = useLeadInsightsQuery(leadId);
+  return <Card className="mt-4"><CardContent className="p-0"><InsightsPanel data={data} isLoading={isLoading} error={error} /></CardContent></Card>;
+}
 
 const v = (x) => (x && typeof x === "object" ? x.value : x);
 
@@ -165,9 +173,9 @@ export default function LeadDetailPage() {
               {ai.reason && <p><b>Why this score:</b> {ai.reason}</p>}
               {ai.aiOpinion && <p><b>AI reviewer:</b> {ai.aiOpinion}</p>}
               {ai.missing?.length > 0 && <p><b>Still to find out:</b> {ai.missing.join(", ")}</p>}
-              <p className="text-xs text-muted-foreground">Conversation summary and "what to say next" arrive with the WhatsApp view (FS07).</p>
             </CardContent>
           </Card>
+          <LeadInsightsCard leadId={lead.leadId} />
         </TabsContent>
 
         <TabsContent value="notes"><NotesTab lead={lead} /></TabsContent>

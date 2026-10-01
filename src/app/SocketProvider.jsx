@@ -61,9 +61,20 @@ export function SocketProvider({ children }) {
     socket.on("team_lead_changed", (p) => refresh(["Leads", "Counts", "Unassigned", "Team", "Dashboard", { type: "Lead", id: p.leadId }]));
     socket.on("unassigned_lead", () => refresh(["Unassigned", "Team"]));
     // Central WhatsApp (FS06): the server sends only chats of leads this user may see
-    const chatChanged = (p = {}) => refresh(["Conversations", ...(p.sessionId ? [{ type: "Conversation", id: p.sessionId }] : ["Conversation"])]);
+    const chatChanged = (p = {}) => refresh(["Conversations", "Insights", ...(p.sessionId ? [{ type: "Conversation", id: p.sessionId }] : ["Conversation"])]);
     ["wa_outbound_message", "wa_message_status", "wa_message_media", "wa_ai_control_changed", "wa_human_mode_message", "wa_lead_updated", "wa_follow_up_update"]
       .forEach((ev) => socket.on(ev, chatChanged));
+    socket.on("wa_ai_draft", chatChanged);
+    socket.on("lead_insights_updated", () => refresh(["Insights"]));
+    // FS07 §29: the AI handed a franchise chat to its owner
+    socket.on("wa_handoff", (p = {}) => {
+      refresh(["Conversations", "Insights", "Leads", "Dashboard", ...(p.sessionId ? [{ type: "Conversation", id: p.sessionId }] : [])]);
+      toast.warning(`Take over: ${p.name || "Franchise lead"}${p.leadCode ? ` (${p.leadCode})` : ""}`, {
+        description: (p.reasons || []).map((r) => r.label).join(", ") || "The AI handed this chat to you",
+        duration: 15000,
+        action: p.sessionId ? { label: "Open chat", onClick: () => window.dispatchEvent(new CustomEvent("sales:open-chat", { detail: p.sessionId })) } : undefined,
+      });
+    });
     socket.on("wa_new_message", (p = {}) => {
       chatChanged(p);
       if (p.sessionId && window.location.pathname === `/whatsapp/${p.sessionId}`) return;   // already reading it

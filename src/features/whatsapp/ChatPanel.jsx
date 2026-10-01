@@ -4,26 +4,46 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { ArrowLeft, Send, Loader2, AlertCircle, Info, Paperclip, X, FileText, ShieldCheck, ExternalLink, ChevronUp } from "lucide-react";
+import { ArrowLeft, Send, Loader2, AlertCircle, Info, Paperclip, X, FileText, ShieldCheck, ExternalLink, ChevronUp, Sparkles, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { errorText, prettyPhone } from "@/lib/format";
 import { selectUser } from "@/app/authSlice";
 import {
-  useConversationQuery, useLazyConversationQuery, useMarkConversationReadMutation, useSendWhatsappFileMutation, useSendWhatsappMutation,
+  useChatInsightsQuery, useConversationQuery, useLazyConversationQuery, useMarkConversationReadMutation, useSendWhatsappFileMutation, useSendWhatsappMutation,
 } from "@/app/api";
+import { DraftBanner, ModeSwitch, SuggestPanel } from "./AiAssistBits";
+import { InsightsPanel } from "./InsightsPanel";
 import ChatBubble, { ReplyQuote } from "./ChatBubble";
 import { TemplateDialog } from "./TemplateDialog";
-import { AI_MODE, avatarColor, dayLabel, fileKind, fileSize, initials, windowInfo } from "./waUtils";
+import { avatarColor, dayLabel, fileKind, fileSize, initials, windowInfo } from "./waUtils";
 
 const ACCEPT = [
   "image/jpeg", "image/png", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".csv", ".ppt", ".pptx", ".txt",
   "video/mp4", "video/3gpp", "audio/mpeg", "audio/ogg", "audio/aac", "audio/mp4", ".m4a",
 ].join(",");
 const MAX_MB = 25;
+const WIDE = "(min-width: 1280px)";
+
+// Insights side panel: open by default on wide screens, remembered per browser
+function useInsightsOpen() {
+  const [wide, setWide] = useState(() => typeof window !== "undefined" && window.matchMedia(WIDE).matches);
+  const [open, setOpen] = useState(() => {
+    try { const v = localStorage.getItem("sales.insightsOpen"); return v === null ? window.matchMedia(WIDE).matches : v === "1"; } catch { return false; }
+  });
+  useEffect(() => {
+    const mq = window.matchMedia(WIDE);
+    const fn = () => setWide(mq.matches);
+    mq.addEventListener("change", fn);
+    return () => mq.removeEventListener("change", fn);
+  }, []);
+  const toggle = () => setOpen((o) => { try { localStorage.setItem("sales.insightsOpen", o ? "0" : "1"); } catch { /* ignore */ } return !o; });
+  return { wide, open, toggle, close: () => setOpen(false) };
+}
 
 function AttachmentPreview({ file, onRemove }) {
   const thumb = useMemo(() => (file?.type?.startsWith("image/") ? URL.createObjectURL(file) : null), [file]);
@@ -57,6 +77,9 @@ export function ChatPanel({ conversationId, onBack }) {
   const [replyTo, setReplyTo] = useState(null);
   const [templateOpen, setTemplateOpen] = useState(false);
   const [flashId, setFlashId] = useState(null);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const insightsUi = useInsightsOpen();
+  const insights = useChatInsightsQuery(conversationId, { skip: !insightsUi.open });
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
   const fileRef = useRef(null);
@@ -174,10 +197,12 @@ export function ChatPanel({ conversationId, onBack }) {
   }
 
   const win = windowInfo(data.conversation.lastInboundAt);
-  const mode = AI_MODE[conv.aiMode] || AI_MODE.AI;
+  const useText = (t) => { setText(t); setSuggestOpen(false); setTimeout(() => inputRef.current?.focus(), 0); };
+  const insightsBody = <InsightsPanel data={insights.data} isLoading={insights.isLoading} error={insights.error} />;
 
   return (
-    <div className="flex h-full min-w-0 flex-col">
+    <div className="flex h-full min-w-0">
+    <div className="flex h-full min-w-0 flex-1 flex-col">
       {/* Header */}
       <div className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-3">
         <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" onClick={onBack} aria-label="Back"><ArrowLeft className="h-4 w-4" /></Button>
@@ -185,17 +210,18 @@ export function ChatPanel({ conversationId, onBack }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-semibold">{conv.name}</span>
-            {conv.leadCode && <span className="hidden rounded bg-muted px-1.5 font-mono text-[10px] sm:inline">{conv.leadCode}</span>}
-            <span className={cn("hidden rounded border px-1.5 py-px text-[10px] font-medium sm:inline", mode.className)}>{mode.label}</span>
+            {conv.leadCode && <span className="hidden shrink-0 rounded bg-muted px-1.5 font-mono text-[10px] 2xl:inline">{conv.leadCode}</span>}
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <span>{prettyPhone(conv.phone)}</span>
-            <span className={cn("flex items-center gap-1", win.open ? "text-emerald-600" : "text-amber-600")}>
+          <div className="flex min-w-0 items-center gap-2 whitespace-nowrap text-[11px] text-muted-foreground">
+            <span className="hidden md:inline">{prettyPhone(conv.phone)}</span>
+            <span className={cn("flex min-w-0 items-center gap-1 truncate", win.open ? "text-emerald-600" : "text-amber-600")}>
               <span className={cn("h-1.5 w-1.5 rounded-full", win.open ? "bg-emerald-500" : "bg-amber-500")} />{win.label}
             </span>
           </div>
         </div>
         {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        <ModeSwitch conversationId={conversationId} mode={conv.aiMode} />
+        <Button variant={insightsUi.open ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={insightsUi.toggle} aria-label="AI insights" title="AI qualification + conversation summary"><Brain className="h-4 w-4" /></Button>
         <Button asChild variant="outline" size="sm" className="h-8"><Link to={`/leads/${conv.leadId}`}><ExternalLink className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Lead</span></Link></Button>
       </div>
 
@@ -234,7 +260,10 @@ export function ChatPanel({ conversationId, onBack }) {
           </div>
         ) : (
           <>
-            {conv.aiMode !== "HUMAN" && <p className="mb-2 text-[11px] text-muted-foreground">Your message pauses the AI for this chat — you continue the conversation.</p>}
+            {conv.aiMode === "AI" && <p className="mb-2 text-[11px] text-muted-foreground">Your message pauses the AI for this chat — you continue the conversation.</p>}
+            {conv.aiMode === "AI_HUMAN" && !data.aiDraft && <p className="mb-2 text-[11px] text-muted-foreground">AI drafts mode: the AI writes a draft for every new message — you check it and send.</p>}
+            <DraftBanner draft={data.aiDraft} onUse={useText} />
+            <SuggestPanel conversationId={conversationId} open={suggestOpen} onClose={() => setSuggestOpen(false)} onPick={useText} />
             {replyTo && (
               <div className="mb-2 flex items-start gap-2">
                 <div className="min-w-0 flex-1"><ReplyQuote quote={replyTo} onJump={() => jumpTo({ messageId: replyTo.id })} compact /></div>
@@ -246,6 +275,7 @@ export function ChatPanel({ conversationId, onBack }) {
               <input ref={fileRef} type="file" accept={ACCEPT} className="hidden" onChange={(e) => { pickFile(e.target.files?.[0]); e.target.value = ""; }} />
               <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => fileRef.current?.click()} disabled={sending} aria-label="Attach a file" title="Attach image, PDF, Word, Excel, audio or video"><Paperclip className="h-5 w-5" /></Button>
               <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => setTemplateOpen(true)} disabled={sending} aria-label="Send a template" title="Send an approved WhatsApp template"><FileText className="h-5 w-5" /></Button>
+              <Button variant={suggestOpen ? "secondary" : "ghost"} size="icon" className="h-10 w-10 shrink-0" onClick={() => setSuggestOpen((o) => !o)} disabled={sending} aria-label="What should I say next?" title="What should I say next? (AI suggestions)"><Sparkles className="h-5 w-5 text-sky-600" /></Button>
               <Textarea ref={inputRef} value={text} rows={1} disabled={sending}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } if (e.key === "Escape") setReplyTo(null); }}
@@ -260,6 +290,16 @@ export function ChatPanel({ conversationId, onBack }) {
         )}
       </div>
       <TemplateDialog open={templateOpen} onOpenChange={setTemplateOpen} conversation={conv} />
+    </div>
+    {insightsUi.open && insightsUi.wide && <aside className="w-80 shrink-0 overflow-y-auto border-l bg-card">{insightsBody}</aside>}
+    {!insightsUi.wide && (
+      <Sheet open={insightsUi.open} onOpenChange={(o) => !o && insightsUi.close()}>
+        <SheetContent side="right" className="w-[92vw] overflow-y-auto p-0 sm:max-w-sm">
+          <SheetHeader className="border-b p-4"><SheetTitle>AI insights</SheetTitle></SheetHeader>
+          {insightsBody}
+        </SheetContent>
+      </Sheet>
+    )}
     </div>
   );
 }
