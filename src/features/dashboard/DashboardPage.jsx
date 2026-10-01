@@ -65,7 +65,7 @@ export default function DashboardPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="flex items-center gap-2 text-base"><PhoneCall className="h-4 w-4 text-primary" />Call first</CardTitle>
-          <span className="text-xs text-muted-foreground">Ready to buy → hot → overdue → new</span>
+          <span className="text-xs text-muted-foreground">Ordered by the call-first score — hover an action to see why</span>
         </CardHeader>
         <CardContent>
           {data?.callFirst?.length

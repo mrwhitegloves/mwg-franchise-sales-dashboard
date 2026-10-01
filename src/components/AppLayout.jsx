@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { LogOut, Plus, Search, UserCircle } from "lucide-react";
+import { LogOut, Plus, Search, Sparkles, UserCircle } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AppSidebar } from "./AppSidebar";
 import { SearchCommand } from "./SearchCommand";
 import { NotificationBell } from "./NotificationBell";
+import { AssistantDrawer } from "@/features/assistant/AssistantDrawer";
 import { forgetSubscription, refreshSubscription } from "@/lib/push";
 const CreateLeadDialog = lazy(() => import("@/features/leads/CreateLeadDialog").then((m) => ({ default: m.CreateLeadDialog })));
 import { useSocket } from "@/app/socketContext";
@@ -30,6 +31,7 @@ export function AppLayout() {
   const [logout] = useLogoutMutation();
   const [searchOpen, setSearchOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
 
   // ⌘K / Ctrl+K search; toasts can ask to open a lead
   useEffect(() => {
@@ -81,6 +83,7 @@ export function AppLayout() {
               </Button>
               <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSearchOpen(true)}><Search className="h-4 w-4" /></Button>
               <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="mr-1 h-4 w-4" /><span className="hidden sm:inline">Create lead</span></Button>
+              <Button size="sm" variant="outline" onClick={() => setAiOpen(true)} title="AI Sales Assistant"><Sparkles className="h-4 w-4 text-primary sm:mr-1" /><span className="hidden sm:inline">Ask AI</span></Button>
               <NotificationBell />
               <span title={status === "online" ? "Live updates on" : "Reconnecting…"} className={cn("h-2.5 w-2.5 rounded-full", status === "online" ? "bg-emerald-500" : "animate-pulse bg-amber-500")} />
               <DropdownMenu>
@@ -107,6 +110,7 @@ export function AppLayout() {
         </div>
       </div>
       <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
+      <AssistantDrawer open={aiOpen} onOpenChange={setAiOpen} />
       {createOpen && <Suspense fallback={null}><CreateLeadDialog open={createOpen} onOpenChange={setCreateOpen} /></Suspense>}
     </SidebarProvider>
   );

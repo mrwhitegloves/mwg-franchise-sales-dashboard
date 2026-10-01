@@ -20,6 +20,17 @@ export function ScoreBadge({ score, band, hot }) {
   );
 }
 
+// FS12 next best action chip; the reasons show on hover
+const ACTION_TONE = { CALL_NOW: "bg-red-50 text-red-700 border-red-200", REPLY: "bg-emerald-50 text-emerald-700 border-emerald-200", DO_FOLLOWUP: "bg-amber-50 text-amber-800 border-amber-200", FIRST_CALL: "bg-orange-50 text-orange-700 border-orange-200", CHECK_PAYMENT: "bg-violet-50 text-violet-700 border-violet-200" };
+export function NextAction({ p }) {
+  if (!p?.action) return <span className="text-xs text-muted-foreground">—</span>;
+  return (
+    <span title={[p.action.why, ...(p.reasons || [])].filter(Boolean).join(" · ")} className={cn("inline-flex items-center whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[11px] font-medium", ACTION_TONE[p.action.code] || "bg-slate-50 text-slate-700 border-slate-200")}>
+      {p.action.label}{p.score !== null && p.score !== undefined && <span className="ml-1 tabular-nums opacity-60">{p.score}</span>}
+    </span>
+  );
+}
+
 export function PriorityBadge({ priority }) {
   if (!priority) return null;
   return <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", PRIORITY[priority])}>{priority}</span>;

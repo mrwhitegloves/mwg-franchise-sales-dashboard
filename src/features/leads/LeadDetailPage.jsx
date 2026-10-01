@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
-  ArrowLeft, Phone, MessageSquare, Pencil, GitBranch, XCircle, RotateCcw, UserCog, Bot, ShieldAlert, Send, Loader2, CalendarDays, Clock,
+  ArrowLeft, Phone, MessageSquare, Pencil, GitBranch, XCircle, RotateCcw, UserCog, Bot, ShieldAlert, Send, Loader2, CalendarDays, Clock, Lightbulb, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -111,6 +111,18 @@ export default function LeadDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* FS12: next best action + why this lead is where it is on the call-first list */}
+      {lead.status === "open" && lead.callPriority?.action && (
+        <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm">
+          <div className="min-w-0 space-y-1">
+            <p className="flex items-center gap-1.5"><Lightbulb className="h-4 w-4 text-sky-700" /><b>Next best action: {lead.callPriority.action.label}</b> <span className="text-xs text-muted-foreground">· call-first score {lead.callPriority.score}</span></p>
+            <p className="text-muted-foreground">{lead.callPriority.action.why}</p>
+            {lead.callPriority.reasons?.length > 0 && <div className="flex flex-wrap gap-1">{lead.callPriority.reasons.map((x) => <span key={x} className="rounded bg-white/70 px-1.5 py-0.5 text-[11px] text-sky-900">{x}</span>)}</div>}
+          </div>
+          <Button size="sm" variant="outline" className="bg-white" onClick={() => window.dispatchEvent(new CustomEvent("sales:ask-ai", { detail: "What should I say next?" }))}><Sparkles className="mr-1 h-4 w-4" />What should I say?</Button>
+        </div>
+      )}
 
       {lead.status === "open" && (lead.followUp ? (
         // The salesperson's own planned follow-up wins over the system's suggestion (FS08)

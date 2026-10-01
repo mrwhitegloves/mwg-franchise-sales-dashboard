@@ -70,6 +70,9 @@ export const salesApi = baseApi.injectEndpoints({
     controlReport: b.query({ query: (params = {}) => ({ url: "/control/reports", params }), providesTags: ["Reports"] }),
     controlActivities: b.query({ query: (params = {}) => ({ url: "/control/activities", params }), providesTags: ["Reports"] }),
     myPerformance: b.query({ query: (params = {}) => ({ url: "/me/performance", params }), providesTags: ["Reports"] }),
+    // ── AI Sales Assistant (FS12) ─────────────────────────
+    askAssistant: b.mutation({ query: (body) => ({ url: "/assistant/ask", method: "POST", body }) }),
+    assistantSuggestions: b.query({ query: (leadId) => ({ url: "/assistant/suggestions", params: leadId ? { leadId } : {} }) }),
 
     // ── central WhatsApp (FS06) ───────────────────────────
     conversations: b.query({ query: (params = {}) => ({ url: "/whatsapp", params }), providesTags: ["Conversations"] }),
@@ -165,7 +168,7 @@ export const {
   useLeadEditQuery, useEditDetailsMutation,
   useTeamQuery, useUpdateTeamMemberMutation, useUnassignedQuery, useAssignLeadMutation, useReassignLeadMutation, useBulkAssignMutation,
   useAssignmentSettingsQuery, useUpdateAssignmentSettingsMutation, useTerritoriesQuery, useSaveTerritoryMutation, useDeleteTerritoryMutation,
-  useControlOverviewQuery, useControlPerformanceQuery, usePersonAuditQuery, useLazyPersonAuditQuery, useControlReportQuery, useControlActivitiesQuery, useLazyControlActivitiesQuery, useMyPerformanceQuery,
+  useControlOverviewQuery, useControlPerformanceQuery, usePersonAuditQuery, useLazyPersonAuditQuery, useControlReportQuery, useControlActivitiesQuery, useLazyControlActivitiesQuery, useMyPerformanceQuery, useAskAssistantMutation, useAssistantSuggestionsQuery,
   useConversationsQuery, useConversationQuery, useLazyConversationQuery, useLeadConversationQuery, useStartConversationMutation, useWaTemplatesQuery,
   useSendWhatsappMutation, useSendWhatsappFileMutation, useSendWhatsappTemplateMutation, useMarkConversationReadMutation,
   useSetChatModeMutation, useChatInsightsQuery, useLeadInsightsQuery, useSuggestRepliesMutation,

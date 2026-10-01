@@ -14,7 +14,7 @@ import { LeadsTable } from "./LeadsTable";
 import { cn } from "@/lib/utils";
 
 const TABS = ["all", "new", "hot", "contacted", "qualified", "meeting", "proposal", "payment_pending", "won", "lost", "overdue"];
-const SORTS = [["recent", "Recent activity"], ["followup", "Next follow-up"], ["score", "Lead score"], ["value", "Value"], ["created", "Newest"]];
+const SORTS = [["priority", "Call first"], ["recent", "Recent activity"], ["followup", "Next follow-up"], ["score", "Lead score"], ["value", "Value"], ["created", "Newest"]];
 const TITLES = {
   my: ["My Leads", "Franchise leads assigned to you"],
   hot: ["Hot Leads", "Ready to buy and high-score leads — call these first"],
@@ -25,7 +25,7 @@ export default function LeadsPage({ mode = "my" }) {
   const [params, setParams] = useSearchParams();
   const team = useSelector(selectTeam);
   const filter = mode === "hot" ? "hot" : params.get("filter") || "all";
-  const sort = params.get("sort") || (mode === "hot" ? "score" : "recent");
+  const sort = params.get("sort") || (mode === "hot" ? "score" : mode === "my" ? "priority" : "recent");   // FS12: My Leads = call first
   const page = Number(params.get("page") || 1);
   const owner = params.get("owner") || "";
   const [q, setQ] = useState(params.get("q") || "");
