@@ -1,6 +1,7 @@
 import { useSelector } from "react-redux";
 import { ShieldCheck, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NotificationSettings } from "./NotificationSettings";
 import { selectScope, selectUser } from "@/app/authSlice";
 import { ROLE_LABEL } from "@/lib/stages";
 import { dateTime } from "@/lib/format";
@@ -42,6 +43,7 @@ export default function ProfilePage() {
           <p className="flex items-start gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />Availability, capacity and working hours are set by your manager / admin.</p>
         </CardContent>
       </Card>
+      <NotificationSettings />
     </div>
   );
 }

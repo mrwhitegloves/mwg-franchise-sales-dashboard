@@ -137,6 +137,12 @@ export const salesApi = baseApi.injectEndpoints({
     verifyPayment: b.mutation({ query: ({ id, ...body }) => ({ url: `/payments/${id}/verify`, method: "POST", body }), invalidatesTags: ["Payments", "Lead", "Leads", "Dashboard", "Revenue"] }),
     leadOnboarding: b.query({ query: (leadId) => `/leads/${leadId}/onboarding`, providesTags: ["Payments"] }),
     revenue: b.query({ query: (params = {}) => ({ url: "/revenue", params }), providesTags: ["Revenue"] }),
+    // ── notifications (FS10) ──────────────────────────────
+    notifications: b.query({ query: (params = {}) => ({ url: "/notifications", params }), providesTags: ["Notifications"] }),
+    readNotification: b.mutation({ query: (id) => ({ url: id ? `/notifications/${id}/read` : "/notifications/read-all", method: "POST" }), invalidatesTags: ["Notifications"] }),
+    clearNotification: b.mutation({ query: (id) => ({ url: id ? `/notifications/${id}/clear` : "/notifications/clear-all", method: "POST" }), invalidatesTags: ["Notifications"] }),
+    notificationPrefs: b.query({ query: () => "/me/notification-prefs", providesTags: ["NotifyPrefs"] }),
+    updateNotificationPrefs: b.mutation({ query: (body) => ({ url: "/me/notification-prefs", method: "PATCH", body }), invalidatesTags: ["NotifyPrefs"] }),
     markConversationRead: b.mutation({ query: (id) => ({ url: `/whatsapp/${id}/mark-read`, method: "POST" }), invalidatesTags: ["Conversations"] }),
   }),
 });
@@ -155,5 +161,6 @@ export const {
   useMeetingsQuery, useCreateMeetingMutation, useUpdateMeetingMutation, useSlaSettingsQuery, useUpdateSlaMutation, useLazyActivitiesQuery,
   useProposalsQuery, useLeadProposalsQuery, useProposalSettingsQuery, useUpdateProposalSettingsMutation, useCreateProposalMutation, useProposalPdfMutation,
   useSendProposalMutation, useProposalOutcomeMutation, useDecideDiscountMutation, usePaymentsQuery, useLeadPaymentsQuery, useRequestPaymentMutation,
+  useNotificationsQuery, useLazyNotificationsQuery, useReadNotificationMutation, useClearNotificationMutation, useNotificationPrefsQuery, useUpdateNotificationPrefsMutation,
   useSendPaymentLinkMutation, useCheckPaymentMutation, useSubmitProofMutation, useCancelPaymentMutation, useVerifyPaymentMutation, useLeadOnboardingQuery, useRevenueQuery,
 } = salesApi;

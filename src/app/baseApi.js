@@ -24,7 +24,7 @@ const baseQuery = async (args, api, extra) => {
 export const baseApi = createApi({
   reducerPath: "api",
   baseQuery,
-  tagTypes: ["Me", "Meta", "Dashboard", "Leads", "Counts", "Lead", "Team", "Unassigned", "Settings", "Conversations", "Conversation", "Insights", "Tasks", "Meetings", "Sla", "Proposals", "Payments", "Revenue"],
+  tagTypes: ["Me", "Meta", "Dashboard", "Leads", "Counts", "Lead", "Team", "Unassigned", "Settings", "Conversations", "Conversation", "Insights", "Tasks", "Meetings", "Sla", "Proposals", "Payments", "Revenue", "Notifications", "NotifyPrefs"],
   refetchOnFocus: true,
   refetchOnReconnect: true,
   endpoints: () => ({}),

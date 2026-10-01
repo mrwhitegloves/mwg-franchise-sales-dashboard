@@ -32,7 +32,7 @@ export function SocketProvider({ children }) {
     socket.on("connect", () => {
       setState({ socket, status: "online" });
       // After a drop, refresh what we show (the server keeps everything)
-      if (wasDown) refresh(["Dashboard", "Leads", "Counts", "Unassigned", "Team", "Lead", "Conversations", "Conversation"]);
+      if (wasDown) refresh(["Notifications", "Dashboard", "Leads", "Counts", "Unassigned", "Team", "Lead", "Conversations", "Conversation"]);
       wasDown = false;
     });
     socket.on("disconnect", () => { wasDown = true; setState({ socket, status: "reconnecting" }); });
@@ -75,7 +75,9 @@ export function SocketProvider({ children }) {
     });
     socket.on("tasks_changed", () => refresh(["Tasks", "Meetings", "Dashboard"]));
     socket.on("sales_alert", (p = {}) => {
-      refresh(["Tasks", "Dashboard"]);
+      refresh(["Tasks", "Dashboard", "Notifications"]);
+      // These have their own richer toast (lead_assigned / wa_handoff / wa_new_message events)
+      if (["LEAD_ASSIGNED", "FRANCHISE_HANDOFF", "WHATSAPP_REPLY"].includes(p.kind)) return;
       const show = p.kind === "FOLLOWUP_REMINDER" ? toast.info : toast.warning;
       show(p.title || "Follow-up", {
         description: p.body, duration: p.kind === "FOLLOWUP_REMINDER" ? 8000 : 20000,
