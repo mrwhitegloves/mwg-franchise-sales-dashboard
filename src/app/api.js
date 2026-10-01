@@ -32,6 +32,11 @@ export const salesApi = baseApi.injectEndpoints({
       query: ({ id, ...body }) => ({ url: `/leads/${id}/status`, method: "POST", body }),
       invalidatesTags: (r, e, { id }) => [{ type: "Lead", id }, ...LIST_TAGS],
     }),
+    leadEdit: b.query({ query: (id) => `/leads/${id}/edit`, providesTags: (r, e, id) => [{ type: "Lead", id }] }),
+    editDetails: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/leads/${id}/details`, method: "PATCH", body }),
+      invalidatesTags: (r, e, { id }) => [{ type: "Lead", id }, "Leads"],
+    }),
     addNote: b.mutation({
       query: ({ id, text }) => ({ url: `/leads/${id}/notes`, method: "POST", body: { text } }),
       invalidatesTags: (r, e, { id }) => [{ type: "Lead", id }],
@@ -58,6 +63,7 @@ export const {
   useLoginMutation, useMeQuery, useLogoutMutation, useMetaQuery,
   useDashboardQuery, useLeadsQuery, useLeadCountsQuery, useLazySearchQuery, useLeadQuery, useActivitiesQuery, useAssignmentHistoryQuery,
   useCheckDuplicateMutation, useCreateLeadMutation, useUpdateLeadMutation, useChangeStatusMutation, useAddNoteMutation,
+  useLeadEditQuery, useEditDetailsMutation,
   useTeamQuery, useUpdateTeamMemberMutation, useUnassignedQuery, useAssignLeadMutation, useReassignLeadMutation, useBulkAssignMutation,
   useAssignmentSettingsQuery,
 } = salesApi;

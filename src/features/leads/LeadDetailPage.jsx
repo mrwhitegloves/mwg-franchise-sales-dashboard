@@ -1,6 +1,6 @@
 // §34 LEAD DETAIL — only what this user may see (the API returns 403 otherwise)
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   ArrowLeft, Phone, MessageSquare, Pencil, GitBranch, XCircle, RotateCcw, UserCog, Bot, ShieldAlert, Send, Loader2, CalendarDays, Clock,
@@ -36,7 +36,10 @@ export default function LeadDetailPage() {
   const scope = useSelector(selectScope);
   const isManager = scope?.kind !== "own";
   const { data, error, isLoading } = useLeadQuery(id);
-  const [dialog, setDialog] = useState(null);
+  const [params, setParams] = useSearchParams();
+  // "?edit=1" (✎ in a lead list) opens the edit modal straight away
+  const [dialog, setDialog] = useState(() => (params.get("edit") === "1" ? "edit" : null));
+  useEffect(() => { if (params.get("edit")) setParams({}, { replace: true }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [reopen, { isLoading: reopening }] = useChangeStatusMutation();
 
   // Reassigned away while open → the user loses access (§27)

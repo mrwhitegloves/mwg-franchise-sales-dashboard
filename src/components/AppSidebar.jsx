@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
+import { activeNavUrl, NAV_ACTIVE, NAV_IDLE } from "@/lib/activeNav";
 import { useSelector } from "react-redux";
 import {
   LayoutDashboard, Users, Flame, MessagesSquare, CalendarClock, CalendarDays, FileText, IndianRupee,
@@ -32,17 +33,11 @@ const CONTROL = [
   { title: "Team", url: "/control/team", icon: UsersRound },
 ];
 
-const linkClass = ({ isActive }) =>
-  isActive
-    // Current screen: light red background so you always know where you are
-    ? "flex items-center gap-3 rounded-lg !bg-red-50 px-3 py-2 font-semibold !text-red-700 ring-1 ring-red-100"
-    : "flex items-center gap-3 rounded-lg !bg-transparent px-3 py-2 text-sidebar-foreground hover:!bg-sidebar-accent/60";
-
-function Item({ item, badge }) {
+function Item({ item, badge, active }) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild>
-        <NavLink to={item.url} end={item.url === "/"} className={linkClass}>
+        <NavLink to={item.url} className={active ? NAV_ACTIVE : NAV_IDLE} aria-current={active ? "page" : undefined}>
           <item.icon className="h-4 w-4" />
           <span>{item.title}</span>
           {item.soon && <span className="ml-auto rounded bg-muted px-1.5 text-[10px] text-muted-foreground">soon</span>}
@@ -57,6 +52,8 @@ export function AppSidebar() {
   const scope = useSelector(selectScope);
   const { data } = useLeadCountsQuery(undefined, { pollingInterval: 0 });
   const isManager = hasSalesRole(scope, "MANAGER");
+  const { pathname } = useLocation();
+  const current = activeNavUrl(pathname, [...MAIN, ...(isManager ? CONTROL : [])].map((i) => i.url));
   return (
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border p-4">
@@ -72,7 +69,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {MAIN.map((item) => <Item key={item.url} item={item} badge={item.badge === "hot" && data?.counts?.hot ? data.counts.hot : null} />)}
+              {MAIN.map((item) => <Item key={item.url} item={item} active={current === item.url} badge={item.badge === "hot" && data?.counts?.hot ? data.counts.hot : null} />)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -81,7 +78,7 @@ export function AppSidebar() {
             <SidebarGroupLabel>Control Center</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {CONTROL.map((item) => <Item key={item.url} item={item} />)}
+                {CONTROL.map((item) => <Item key={item.url} item={item} active={current === item.url} />)}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

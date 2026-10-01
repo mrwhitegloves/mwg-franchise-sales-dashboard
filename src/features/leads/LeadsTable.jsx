@@ -51,9 +51,15 @@ export function LeadsTable({ leads = [], loading, showOwner = false, compact = f
         { id: "value", header: "Value", cell: ({ row: { original: l } }) => <span className="whitespace-nowrap text-xs tabular-nums">{l.opportunityValue ? inrShort(l.opportunityValue) : "—"}</span> },
       ]),
       ...(showOwner ? [{ id: "owner", header: "Owner", cell: ({ row: { original: l } }) => <span className="whitespace-nowrap text-xs">{l.owner?.name || <span className="text-amber-600">Unassigned</span>}</span> }] : []),
+      {
+        id: "edit", header: "", cell: ({ row: { original: l } }) => (
+          <button title="Edit lead" className="rounded px-1.5 py-0.5 text-muted-foreground hover:bg-muted hover:text-primary"
+            onClick={(e) => { e.stopPropagation(); navigate(`/leads/${l.leadId}?edit=1`); }}>✎</button>
+        ),
+      },
     ];
     return cols;
-  }, [compact, showOwner, selectable, selected, onToggle]);
+  }, [compact, showOwner, selectable, selected, onToggle, navigate]);
 
   const table = useReactTable({ data: leads, columns, getCoreRowModel: getCoreRowModel(), getRowId: (r) => r.leadId });
 
