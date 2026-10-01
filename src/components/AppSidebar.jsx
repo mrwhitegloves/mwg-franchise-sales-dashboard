@@ -3,7 +3,7 @@ import { activeNavUrl, NAV_ACTIVE, NAV_IDLE } from "@/lib/activeNav";
 import { useSelector } from "react-redux";
 import {
   LayoutDashboard, Users, Flame, MessagesSquare, CalendarClock, CalendarDays, FileText, IndianRupee,
-  ListChecks, TrendingUp, UserCircle, Inbox, UsersRound, Table2, Timer,
+  ListChecks, TrendingUp, UserCircle, Inbox, UsersRound, Table2, Timer, Gauge, Activity, BarChart3, Shuffle,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu,
@@ -24,14 +24,19 @@ const MAIN = [
   { title: "Proposals", url: "/proposals", icon: FileText, badge: "approval" },
   { title: "Payments", url: "/payments", icon: IndianRupee, badge: "verify" },
   { title: "Tasks", url: "/tasks", icon: ListChecks },
-  { title: "My Performance", url: "/performance", icon: TrendingUp, soon: true },
+  { title: "My Performance", url: "/performance", icon: TrendingUp },
   { title: "Profile", url: "/profile", icon: UserCircle },
 ];
 const CONTROL = [
+  { title: "Overview", url: "/control/overview", icon: LayoutDashboard },
   { title: "Unassigned Leads", url: "/control/unassigned", icon: Inbox },
-  { title: "Team Leads", url: "/control/leads", icon: Table2 },
+  { title: "All Leads", url: "/control/leads", icon: Table2 },
   { title: "Team", url: "/control/team", icon: UsersRound },
+  { title: "Performance", url: "/control/performance", icon: Gauge },
+  { title: "Activities", url: "/control/activities", icon: Activity },
+  { title: "Reports", url: "/control/reports", icon: BarChart3 },
   { title: "Revenue", url: "/control/revenue", icon: TrendingUp },
+  { title: "Assignment", url: "/control/rules", icon: Shuffle },
   { title: "SLA rules", url: "/control/sla", icon: Timer },
 ];
 

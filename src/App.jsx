@@ -25,6 +25,13 @@ const SlaPage = lazy(() => import("@/features/control/SlaPage"));
 const ProposalsPage = lazy(() => import("@/features/deals/DealPages").then((m) => ({ default: m.ProposalsPage })));
 const PaymentsPage = lazy(() => import("@/features/deals/DealPages").then((m) => ({ default: m.PaymentsPage })));
 const RevenuePage = lazy(() => import("@/features/control/RevenuePage"));
+const OverviewPage = lazy(() => import("@/features/control/OverviewPage"));
+const PerformancePage = lazy(() => import("@/features/control/PerformancePage"));
+const PersonAuditPage = lazy(() => import("@/features/control/PerformancePage").then((m) => ({ default: m.PersonAuditPage })));
+const ReportsPage = lazy(() => import("@/features/control/ReportsPage"));
+const ActivitiesPage = lazy(() => import("@/features/control/ReportsPage").then((m) => ({ default: m.ActivitiesPage })));
+const RulesPage = lazy(() => import("@/features/control/RulesPage"));
+const MyPerformancePage = lazy(() => import("@/features/performance/MyPerformancePage"));
 
 function Protected({ children }) {
   const token = useSelector(selectToken);
@@ -49,10 +56,16 @@ export default function App() {
         <Route path="proposals" element={<Lazy><ProposalsPage /></Lazy>} />
         <Route path="payments" element={<Lazy><PaymentsPage /></Lazy>} />
         <Route path="tasks" element={<Lazy><TasksPage /></Lazy>} />
-        <Route path="performance" element={<Lazy><ComingSoonPage title="My Performance" chapter="FS11" text="Your leads, conversion, meetings, proposals, won deals and revenue." /></Lazy>} />
+        <Route path="performance" element={<Lazy><MyPerformancePage /></Lazy>} />
         <Route path="profile" element={<Lazy><ProfilePage /></Lazy>} />
         <Route path="control" element={<RoleRoute min="MANAGER" />}>
-          <Route index element={<Navigate to="unassigned" replace />} />
+          <Route index element={<Navigate to="overview" replace />} />
+          <Route path="overview" element={<Lazy><OverviewPage /></Lazy>} />
+          <Route path="performance" element={<Lazy><PerformancePage /></Lazy>} />
+          <Route path="people/:userId" element={<Lazy><PersonAuditPage /></Lazy>} />
+          <Route path="reports" element={<Lazy><ReportsPage /></Lazy>} />
+          <Route path="activities" element={<Lazy><ActivitiesPage /></Lazy>} />
+          <Route path="rules" element={<Lazy><RulesPage /></Lazy>} />
           <Route path="unassigned" element={<Lazy><UnassignedPage /></Lazy>} />
           <Route path="team" element={<Lazy><TeamPage /></Lazy>} />
           <Route path="leads" element={<Lazy><TeamLeadsPage /></Lazy>} />

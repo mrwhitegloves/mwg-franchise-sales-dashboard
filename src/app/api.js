@@ -59,6 +59,17 @@ export const salesApi = baseApi.injectEndpoints({
     }),
     bulkAssign: b.mutation({ query: (body) => ({ url: "/leads/bulk-assign", method: "POST", body }), invalidatesTags: LIST_TAGS }),
     assignmentSettings: b.query({ query: () => "/assignment-rules", providesTags: ["Settings"] }),
+    updateAssignmentSettings: b.mutation({ query: (body) => ({ url: "/assignment-rules", method: "PATCH", body }), invalidatesTags: ["Settings", "Team"] }),
+    territories: b.query({ query: () => "/territories", providesTags: ["Territories"] }),
+    saveTerritory: b.mutation({ query: ({ id, ...body }) => ({ url: id ? `/territories/${id}` : "/territories", method: id ? "PATCH" : "POST", body }), invalidatesTags: ["Territories"] }),
+    deleteTerritory: b.mutation({ query: (id) => ({ url: `/territories/${id}`, method: "DELETE" }), invalidatesTags: ["Territories"] }),
+    // ── Control Center reporting (FS11) ──────────────────
+    controlOverview: b.query({ query: (params = {}) => ({ url: "/control/overview", params }), providesTags: ["Reports", "Dashboard"] }),
+    controlPerformance: b.query({ query: (params = {}) => ({ url: "/control/performance", params }), providesTags: ["Reports"] }),
+    personAudit: b.query({ query: ({ userId, ...params }) => ({ url: `/control/people/${userId}/audit`, params }), providesTags: ["Reports"] }),
+    controlReport: b.query({ query: (params = {}) => ({ url: "/control/reports", params }), providesTags: ["Reports"] }),
+    controlActivities: b.query({ query: (params = {}) => ({ url: "/control/activities", params }), providesTags: ["Reports"] }),
+    myPerformance: b.query({ query: (params = {}) => ({ url: "/me/performance", params }), providesTags: ["Reports"] }),
 
     // ── central WhatsApp (FS06) ───────────────────────────
     conversations: b.query({ query: (params = {}) => ({ url: "/whatsapp", params }), providesTags: ["Conversations"] }),
@@ -153,7 +164,8 @@ export const {
   useCheckDuplicateMutation, useCreateLeadMutation, useUpdateLeadMutation, useChangeStatusMutation, useAddNoteMutation,
   useLeadEditQuery, useEditDetailsMutation,
   useTeamQuery, useUpdateTeamMemberMutation, useUnassignedQuery, useAssignLeadMutation, useReassignLeadMutation, useBulkAssignMutation,
-  useAssignmentSettingsQuery,
+  useAssignmentSettingsQuery, useUpdateAssignmentSettingsMutation, useTerritoriesQuery, useSaveTerritoryMutation, useDeleteTerritoryMutation,
+  useControlOverviewQuery, useControlPerformanceQuery, usePersonAuditQuery, useLazyPersonAuditQuery, useControlReportQuery, useControlActivitiesQuery, useLazyControlActivitiesQuery, useMyPerformanceQuery,
   useConversationsQuery, useConversationQuery, useLazyConversationQuery, useLeadConversationQuery, useStartConversationMutation, useWaTemplatesQuery,
   useSendWhatsappMutation, useSendWhatsappFileMutation, useSendWhatsappTemplateMutation, useMarkConversationReadMutation,
   useSetChatModeMutation, useChatInsightsQuery, useLeadInsightsQuery, useSuggestRepliesMutation,
