@@ -1,0 +1,72 @@
+// One Socket.IO connection per tab to the /sales namespace (JWT in the handshake).
+// The server only sends this user's events (per-user / manager / admin rooms), so
+// handlers just refresh the right cached data — no polling, no extra sockets.
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { io } from "socket.io-client";
+import { toast } from "sonner";
+import { SOCKET_URL } from "@/lib/config";
+import { baseApi } from "./baseApi";
+import { loggedOut, selectToken } from "./authSlice";
+
+import { SocketContext } from "./socketContext";
+
+export function SocketProvider({ children }) {
+  const token = useSelector(selectToken);
+  const dispatch = useDispatch();
+  const [state, setState] = useState({ socket: null, status: "offline" });
+  const toastIds = useRef(new Set());
+
+  useEffect(() => {
+    if (!token) return undefined;
+    const socket = io(`${SOCKET_URL}/sales`, {
+      auth: (cb) => cb({ token }),
+      transports: ["websocket", "polling"],
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
+    });
+    const refresh = (tags) => dispatch(baseApi.util.invalidateTags(tags));
+    let wasDown = false;
+
+    socket.on("connect", () => {
+      setState({ socket, status: "online" });
+      // After a drop, refresh what we show (the server keeps everything)
+      if (wasDown) refresh(["Dashboard", "Leads", "Counts", "Unassigned", "Team", "Lead"]);
+      wasDown = false;
+    });
+    socket.on("disconnect", () => { wasDown = true; setState({ socket, status: "reconnecting" }); });
+    socket.on("connect_error", (err) => {
+      setState({ socket, status: "reconnecting" });
+      if (/suspended|not active|no franchise sales access/i.test(err?.message || "")) {
+        toast.error(err.message);
+        dispatch(loggedOut());
+      }
+    });
+
+    socket.on("lead_assigned", (p) => {
+      refresh(["Dashboard", "Leads", "Counts", "Unassigned", { type: "Lead", id: p.leadId }]);
+      if (!toastIds.current.has(`a:${p.leadId}:${p.at}`)) {
+        toastIds.current.add(`a:${p.leadId}:${p.at}`);
+        toast.success(`New franchise lead: ${p.name}${p.leadCode ? ` (${p.leadCode})` : ""}`, {
+          action: { label: "Open", onClick: () => window.dispatchEvent(new CustomEvent("sales:open-lead", { detail: p.leadId })) },
+        });
+      }
+    });
+    socket.on("lead_revoked", (p) => {
+      refresh(["Dashboard", "Leads", "Counts", { type: "Lead", id: p.leadId }]);
+      toast.info(`${p.leadCode || p.name} was moved to another salesperson`);
+      window.dispatchEvent(new CustomEvent("sales:lead-revoked", { detail: p.leadId }));
+    });
+    socket.on("team_lead_changed", (p) => refresh(["Leads", "Counts", "Unassigned", "Team", "Dashboard", { type: "Lead", id: p.leadId }]));
+    socket.on("unassigned_lead", () => refresh(["Unassigned", "Team"]));
+    socket.on("force_logout", ({ reason } = {}) => {
+      toast.error(reason === "deactivated" || reason === "suspended" ? "Your access was changed by an admin. Please sign in again." : "Session ended. Please sign in again.");
+      dispatch(loggedOut());
+    });
+
+    return () => { socket.removeAllListeners(); socket.disconnect(); setState({ socket: null, status: "offline" }); };
+  }, [token, dispatch]);
+
+  return <SocketContext.Provider value={state}>{children}</SocketContext.Provider>;
+}
