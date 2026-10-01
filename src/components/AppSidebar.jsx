@@ -34,7 +34,8 @@ const CONTROL = [
 
 const linkClass = ({ isActive }) =>
   isActive
-    ? "flex items-center gap-3 rounded-lg !bg-primary/10 px-3 py-2 font-semibold !text-primary"
+    // Current screen: light red background so you always know where you are
+    ? "flex items-center gap-3 rounded-lg !bg-red-50 px-3 py-2 font-semibold !text-red-700 ring-1 ring-red-100"
     : "flex items-center gap-3 rounded-lg !bg-transparent px-3 py-2 text-sidebar-foreground hover:!bg-sidebar-accent/60";
 
 function Item({ item, badge }) {
