@@ -109,6 +109,34 @@ export const salesApi = baseApi.injectEndpoints({
     updateMeeting: b.mutation({ query: ({ id, ...body }) => ({ url: `/meetings/${id}`, method: "PATCH", body }), invalidatesTags: ["Meetings", "Tasks", "Lead", "Leads", "Dashboard"] }),
     slaSettings: b.query({ query: () => "/sla", providesTags: ["Sla"] }),
     updateSla: b.mutation({ query: (body) => ({ url: "/sla", method: "PATCH", body }), invalidatesTags: ["Sla"] }),
+    // ── proposals, payments, onboarding, revenue (FS09) ──
+    proposals: b.query({ query: (params = {}) => ({ url: "/proposals", params }), providesTags: ["Proposals"] }),
+    leadProposals: b.query({ query: (leadId) => `/leads/${leadId}/proposals`, providesTags: ["Proposals"] }),
+    proposalSettings: b.query({ query: () => "/proposal-settings", providesTags: ["Sla"], keepUnusedDataFor: 600 }),
+    updateProposalSettings: b.mutation({ query: (body) => ({ url: "/proposal-settings", method: "PATCH", body }), invalidatesTags: ["Sla"] }),
+    createProposal: b.mutation({ query: ({ leadId, ...body }) => ({ url: `/leads/${leadId}/proposals`, method: "POST", body }), invalidatesTags: ["Proposals", "Lead", "Leads", "Dashboard"] }),
+    proposalPdf: b.mutation({ query: (id) => ({ url: `/proposals/${id}/pdf` }) }),
+    sendProposal: b.mutation({ query: ({ id, via }) => ({ url: `/proposals/${id}/send`, method: "POST", body: { via } }), invalidatesTags: ["Proposals", "Lead", "Leads", "Dashboard", "Conversation", "Conversations"] }),
+    proposalOutcome: b.mutation({ query: ({ id, ...body }) => ({ url: `/proposals/${id}/outcome`, method: "POST", body }), invalidatesTags: ["Proposals", "Lead", "Leads", "Dashboard"] }),
+    decideDiscount: b.mutation({ query: ({ id, ...body }) => ({ url: `/proposals/${id}/decide`, method: "POST", body }), invalidatesTags: ["Proposals", "Lead"] }),
+    payments: b.query({ query: (params = {}) => ({ url: "/payments", params }), providesTags: ["Payments"] }),
+    leadPayments: b.query({ query: (leadId) => `/leads/${leadId}/payments`, providesTags: ["Payments"] }),
+    requestPayment: b.mutation({ query: ({ leadId, ...body }) => ({ url: `/leads/${leadId}/payments`, method: "POST", body }), invalidatesTags: ["Payments", "Lead", "Leads", "Dashboard"] }),
+    sendPaymentLink: b.mutation({ query: (id) => ({ url: `/payments/${id}/send-link`, method: "POST" }), invalidatesTags: ["Payments", "Conversation", "Conversations"] }),
+    checkPayment: b.mutation({ query: (id) => ({ url: `/payments/${id}/check`, method: "POST" }), invalidatesTags: ["Payments"] }),
+    submitProof: b.mutation({
+      query: ({ id, file, reference }) => {
+        const body = new FormData();
+        if (file) body.append("file", file);
+        if (reference) body.append("reference", reference);
+        return { url: `/payments/${id}/proof`, method: "POST", body };
+      },
+      invalidatesTags: ["Payments"],
+    }),
+    cancelPayment: b.mutation({ query: ({ id, reason }) => ({ url: `/payments/${id}/cancel`, method: "POST", body: { reason } }), invalidatesTags: ["Payments", "Lead", "Leads"] }),
+    verifyPayment: b.mutation({ query: ({ id, ...body }) => ({ url: `/payments/${id}/verify`, method: "POST", body }), invalidatesTags: ["Payments", "Lead", "Leads", "Dashboard", "Revenue"] }),
+    leadOnboarding: b.query({ query: (leadId) => `/leads/${leadId}/onboarding`, providesTags: ["Payments"] }),
+    revenue: b.query({ query: (params = {}) => ({ url: "/revenue", params }), providesTags: ["Revenue"] }),
     markConversationRead: b.mutation({ query: (id) => ({ url: `/whatsapp/${id}/mark-read`, method: "POST" }), invalidatesTags: ["Conversations"] }),
   }),
 });
@@ -125,4 +153,7 @@ export const {
   useSetChatModeMutation, useChatInsightsQuery, useLeadInsightsQuery, useSuggestRepliesMutation,
   useFollowUpsQuery, useTasksQuery, useLeadTasksQuery, useCreateTaskMutation, useUpdateTaskMutation,
   useMeetingsQuery, useCreateMeetingMutation, useUpdateMeetingMutation, useSlaSettingsQuery, useUpdateSlaMutation, useLazyActivitiesQuery,
+  useProposalsQuery, useLeadProposalsQuery, useProposalSettingsQuery, useUpdateProposalSettingsMutation, useCreateProposalMutation, useProposalPdfMutation,
+  useSendProposalMutation, useProposalOutcomeMutation, useDecideDiscountMutation, usePaymentsQuery, useLeadPaymentsQuery, useRequestPaymentMutation,
+  useSendPaymentLinkMutation, useCheckPaymentMutation, useSubmitProofMutation, useCancelPaymentMutation, useVerifyPaymentMutation, useLeadOnboardingQuery, useRevenueQuery,
 } = salesApi;

@@ -19,10 +19,11 @@ import { TaskList } from "@/features/work/TaskList";
 import { TaskDialog } from "@/features/work/TaskDialogs";
 import { MeetingDialog } from "@/features/work/MeetingDialogs";
 import { MeetingRow } from "@/features/work/MeetingsPage";
+import { OnboardingTab, PaymentsTab, ProposalsTab } from "@/features/deals/LeadDealTabs";
 import { useLeadTasksQuery, useLazyActivitiesQuery } from "@/app/api";
 import { useLeadInsightsQuery } from "@/app/api";
 import { selectScope } from "@/app/authSlice";
-import { ago, dateOnly, dateTime, errorText, inr, prettyPhone, telLink } from "@/lib/format";
+import { ago, dateTime, errorText, inr, prettyPhone, telLink } from "@/lib/format";
 import { EditLeadSheet } from "./EditLeadSheet";
 import { LostDialog, ReassignDialog, StageDialog } from "./LeadActions";
 import { cn } from "@/lib/utils";
@@ -132,9 +133,11 @@ export default function LeadDetailPage() {
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="followups">Follow-ups{lead.followUp ? (lead.followUp.overdue ? " ⚠" : " •") : ""}</TabsTrigger>
           <TabsTrigger value="meetings">Meetings</TabsTrigger>
+          <TabsTrigger value="proposals">Proposals</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="kyc">KYC & onboarding</TabsTrigger>
           <TabsTrigger value="assignment">Assignment</TabsTrigger>
-          <TabsTrigger value="soon">Proposal · Payment</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="overview" className="grid gap-4 lg:grid-cols-2">
@@ -206,20 +209,12 @@ export default function LeadDetailPage() {
           ) : <EmptyState icon={CalendarDays} title="No meetings yet" text="Schedule a video (Google Meet), phone or in-person meeting — it lands on your follow-ups with a reminder." />}
         </TabsContent>
 
-        <TabsContent value="kyc">
-          <Card><CardContent className="p-4">
-            <Row label="KYC status" value={lead.kyc?.status ? `${lead.kyc.status} (since ${dateOnly(lead.kyc.submittedAt)})` : "Not submitted"} />
-            <Row label="Onboarding" value={lead.onboarding ? `${lead.onboarding.code} · ${lead.onboarding.status}` : "Not started"} />
-            {lead.onboarding && <Row label="Current step" value={`${(lead.onboarding.currentStep || "—").replace(/_/g, " ")}${lead.onboarding.dueAt ? ` · due ${dateTime(lead.onboarding.dueAt)}` : ""}`} />}
-            {lead.onboarding?.progress && <Row label="Progress" value={`${lead.onboarding.progress.done} / ${lead.onboarding.progress.total} steps`} />}
-          </CardContent></Card>
-        </TabsContent>
+        <TabsContent value="proposals"><ProposalsTab lead={lead} /></TabsContent>
+        <TabsContent value="payments"><PaymentsTab lead={lead} /></TabsContent>
+        <TabsContent value="kyc"><OnboardingTab lead={lead} /></TabsContent>
 
         <TabsContent value="assignment"><AssignmentTab id={lead.leadId} /></TabsContent>
 
-        <TabsContent value="soon">
-          <EmptyState icon={MessageSquare} title="Coming next" text="Proposals and payments (FS09) will appear on this lead. WhatsApp: use the WhatsApp button above." />
-        </TabsContent>
       </Tabs>
 
       {dialog === "edit" && <EditLeadSheet lead={lead} open onOpenChange={(o) => !o && setDialog(null)} />}

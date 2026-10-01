@@ -22,6 +22,9 @@ const FollowUpsPage = lazy(() => import("@/features/work/FollowUpsPage"));
 const TasksPage = lazy(() => import("@/features/work/TasksPage"));
 const MeetingsPage = lazy(() => import("@/features/work/MeetingsPage"));
 const SlaPage = lazy(() => import("@/features/control/SlaPage"));
+const ProposalsPage = lazy(() => import("@/features/deals/DealPages").then((m) => ({ default: m.ProposalsPage })));
+const PaymentsPage = lazy(() => import("@/features/deals/DealPages").then((m) => ({ default: m.PaymentsPage })));
+const RevenuePage = lazy(() => import("@/features/control/RevenuePage"));
 
 function Protected({ children }) {
   const token = useSelector(selectToken);
@@ -43,8 +46,8 @@ export default function App() {
         <Route path="whatsapp/:id" element={<Lazy><WhatsAppPage /></Lazy>} />
         <Route path="follow-ups" element={<Lazy><FollowUpsPage /></Lazy>} />
         <Route path="meetings" element={<Lazy><MeetingsPage /></Lazy>} />
-        <Route path="proposals" element={<Lazy><ComingSoonPage title="Proposals" chapter="FS09" text="Create and send franchise proposals through the central WhatsApp." /></Lazy>} />
-        <Route path="payments" element={<Lazy><ComingSoonPage title="Payments" chapter="FS09" text="Payment links and payment status (a manager / admin confirms payments)." /></Lazy>} />
+        <Route path="proposals" element={<Lazy><ProposalsPage /></Lazy>} />
+        <Route path="payments" element={<Lazy><PaymentsPage /></Lazy>} />
         <Route path="tasks" element={<Lazy><TasksPage /></Lazy>} />
         <Route path="performance" element={<Lazy><ComingSoonPage title="My Performance" chapter="FS11" text="Your leads, conversion, meetings, proposals, won deals and revenue." /></Lazy>} />
         <Route path="profile" element={<Lazy><ProfilePage /></Lazy>} />
@@ -54,6 +57,7 @@ export default function App() {
           <Route path="team" element={<Lazy><TeamPage /></Lazy>} />
           <Route path="leads" element={<Lazy><TeamLeadsPage /></Lazy>} />
           <Route path="sla" element={<Lazy><SlaPage /></Lazy>} />
+          <Route path="revenue" element={<Lazy><RevenuePage /></Lazy>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

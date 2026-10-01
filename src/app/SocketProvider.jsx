@@ -66,6 +66,13 @@ export function SocketProvider({ children }) {
       .forEach((ev) => socket.on(ev, chatChanged));
     socket.on("wa_ai_draft", chatChanged);
     // FS08: follow-ups / tasks changed (also when a lead moved), reminders + missed / escalated alerts
+    // FS09: proposals / payments changed, approvals waiting
+    socket.on("proposal_updated", () => refresh(["Proposals", "Lead", "Leads"]));
+    socket.on("payment_updated", () => refresh(["Payments", "Lead", "Leads", "Dashboard", "Revenue"]));
+    socket.on("approval_needed", (p = {}) => {
+      refresh(["Proposals"]);
+      toast.warning(`Discount approval needed: ${p.number || "proposal"}`, { action: { label: "Open", onClick: () => window.dispatchEvent(new CustomEvent("sales:navigate", { detail: "/proposals?status=approval" })) } });
+    });
     socket.on("tasks_changed", () => refresh(["Tasks", "Meetings", "Dashboard"]));
     socket.on("sales_alert", (p = {}) => {
       refresh(["Tasks", "Dashboard"]);
