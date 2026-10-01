@@ -65,6 +65,16 @@ export function SocketProvider({ children }) {
     ["wa_outbound_message", "wa_message_status", "wa_message_media", "wa_ai_control_changed", "wa_human_mode_message", "wa_lead_updated", "wa_follow_up_update"]
       .forEach((ev) => socket.on(ev, chatChanged));
     socket.on("wa_ai_draft", chatChanged);
+    // FS08: follow-ups / tasks changed (also when a lead moved), reminders + missed / escalated alerts
+    socket.on("tasks_changed", () => refresh(["Tasks", "Meetings", "Dashboard"]));
+    socket.on("sales_alert", (p = {}) => {
+      refresh(["Tasks", "Dashboard"]);
+      const show = p.kind === "FOLLOWUP_REMINDER" ? toast.info : toast.warning;
+      show(p.title || "Follow-up", {
+        description: p.body, duration: p.kind === "FOLLOWUP_REMINDER" ? 8000 : 20000,
+        action: p.url ? { label: "Open", onClick: () => window.dispatchEvent(new CustomEvent("sales:navigate", { detail: p.url })) } : undefined,
+      });
+    });
     socket.on("lead_insights_updated", () => refresh(["Insights"]));
     // FS07 §29: the AI handed a franchise chat to its owner
     socket.on("wa_handoff", (p = {}) => {

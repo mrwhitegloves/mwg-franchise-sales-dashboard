@@ -20,7 +20,10 @@ export const salesApi = baseApi.injectEndpoints({
     leadCounts: b.query({ query: (params = {}) => ({ url: "/leads/counts", params }), providesTags: ["Counts"] }),
     search: b.query({ query: (q) => ({ url: "/search", params: { q } }) }),
     lead: b.query({ query: (id) => `/leads/${id}`, providesTags: (r, e, id) => [{ type: "Lead", id }] }),
-    activities: b.query({ query: (id) => `/leads/${id}/activities`, providesTags: (r, e, id) => [{ type: "Lead", id }] }),
+    activities: b.query({
+      query: (arg) => (typeof arg === "string" ? `/leads/${arg}/activities` : { url: `/leads/${arg.id}/activities`, params: { group: arg.group || undefined, before: arg.before || undefined } }),
+      providesTags: (r, e, arg) => [{ type: "Lead", id: typeof arg === "string" ? arg : arg.id }],
+    }),
     assignmentHistory: b.query({ query: (id) => `/leads/${id}/assignment-history`, providesTags: (r, e, id) => [{ type: "Lead", id }] }),
     checkDuplicate: b.mutation({ query: (body) => ({ url: "/leads/check-duplicate", method: "POST", body }) }),
     createLead: b.mutation({ query: (body) => ({ url: "/leads", method: "POST", body }), invalidatesTags: LIST_TAGS }),
@@ -95,6 +98,17 @@ export const salesApi = baseApi.injectEndpoints({
     chatInsights: b.query({ query: (id) => `/whatsapp/${id}/insights`, providesTags: (r, e, id) => [{ type: "Insights", id }] }),
     leadInsights: b.query({ query: (leadId) => `/leads/${leadId}/insights`, providesTags: (r, e, id) => [{ type: "Insights", id }] }),
     suggestReplies: b.mutation({ query: ({ id, refresh }) => ({ url: `/whatsapp/${id}/suggest`, method: "POST", body: { refresh: !!refresh } }) }),
+    // ── follow-ups, tasks, meetings, SLA (FS08) ──────────
+    followUps: b.query({ query: (params = {}) => ({ url: "/followups", params }), providesTags: ["Tasks"] }),
+    tasks: b.query({ query: (params = {}) => ({ url: "/tasks", params }), providesTags: ["Tasks"] }),
+    leadTasks: b.query({ query: (leadId) => `/leads/${leadId}/tasks`, providesTags: ["Tasks"] }),
+    createTask: b.mutation({ query: (body) => ({ url: "/tasks", method: "POST", body }), invalidatesTags: ["Tasks", "Leads", "Dashboard", "Lead"] }),
+    updateTask: b.mutation({ query: ({ id, ...body }) => ({ url: `/tasks/${id}`, method: "PATCH", body }), invalidatesTags: ["Tasks", "Leads", "Dashboard", "Lead", "Counts"] }),
+    meetings: b.query({ query: (params = {}) => ({ url: "/meetings", params }), providesTags: ["Meetings"] }),
+    createMeeting: b.mutation({ query: (body) => ({ url: "/meetings", method: "POST", body }), invalidatesTags: ["Meetings", "Tasks", "Lead", "Leads", "Dashboard"] }),
+    updateMeeting: b.mutation({ query: ({ id, ...body }) => ({ url: `/meetings/${id}`, method: "PATCH", body }), invalidatesTags: ["Meetings", "Tasks", "Lead", "Leads", "Dashboard"] }),
+    slaSettings: b.query({ query: () => "/sla", providesTags: ["Sla"] }),
+    updateSla: b.mutation({ query: (body) => ({ url: "/sla", method: "PATCH", body }), invalidatesTags: ["Sla"] }),
     markConversationRead: b.mutation({ query: (id) => ({ url: `/whatsapp/${id}/mark-read`, method: "POST" }), invalidatesTags: ["Conversations"] }),
   }),
 });
@@ -109,4 +123,6 @@ export const {
   useConversationsQuery, useConversationQuery, useLazyConversationQuery, useLeadConversationQuery, useStartConversationMutation, useWaTemplatesQuery,
   useSendWhatsappMutation, useSendWhatsappFileMutation, useSendWhatsappTemplateMutation, useMarkConversationReadMutation,
   useSetChatModeMutation, useChatInsightsQuery, useLeadInsightsQuery, useSuggestRepliesMutation,
+  useFollowUpsQuery, useTasksQuery, useLeadTasksQuery, useCreateTaskMutation, useUpdateTaskMutation,
+  useMeetingsQuery, useCreateMeetingMutation, useUpdateMeetingMutation, useSlaSettingsQuery, useUpdateSlaMutation, useLazyActivitiesQuery,
 } = salesApi;

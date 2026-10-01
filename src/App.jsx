@@ -18,6 +18,10 @@ const UnassignedPage = lazy(() => import("@/features/control/UnassignedPage"));
 const TeamPage = lazy(() => import("@/features/control/TeamPage"));
 const TeamLeadsPage = lazy(() => import("@/features/control/TeamLeadsPage"));
 const WhatsAppPage = lazy(() => import("@/features/whatsapp/WhatsAppPage"));
+const FollowUpsPage = lazy(() => import("@/features/work/FollowUpsPage"));
+const TasksPage = lazy(() => import("@/features/work/TasksPage"));
+const MeetingsPage = lazy(() => import("@/features/work/MeetingsPage"));
+const SlaPage = lazy(() => import("@/features/control/SlaPage"));
 
 function Protected({ children }) {
   const token = useSelector(selectToken);
@@ -37,11 +41,11 @@ export default function App() {
         <Route path="leads/:id" element={<Lazy><LeadDetailPage /></Lazy>} />
         <Route path="whatsapp" element={<Lazy><WhatsAppPage /></Lazy>} />
         <Route path="whatsapp/:id" element={<Lazy><WhatsAppPage /></Lazy>} />
-        <Route path="follow-ups" element={<Lazy><ComingSoonPage title="Follow-ups" chapter="FS08" text="Today / Overdue / Upcoming follow-ups with reminders and escalation." /></Lazy>} />
-        <Route path="meetings" element={<Lazy><ComingSoonPage title="Meetings" chapter="FS08" text="Your franchise meetings and calendar. Meetings already booked show on each lead." /></Lazy>} />
+        <Route path="follow-ups" element={<Lazy><FollowUpsPage /></Lazy>} />
+        <Route path="meetings" element={<Lazy><MeetingsPage /></Lazy>} />
         <Route path="proposals" element={<Lazy><ComingSoonPage title="Proposals" chapter="FS09" text="Create and send franchise proposals through the central WhatsApp." /></Lazy>} />
         <Route path="payments" element={<Lazy><ComingSoonPage title="Payments" chapter="FS09" text="Payment links and payment status (a manager / admin confirms payments)." /></Lazy>} />
-        <Route path="tasks" element={<Lazy><ComingSoonPage title="Tasks" chapter="FS08" text="Calls, WhatsApps, KYC and onboarding tasks for your leads." /></Lazy>} />
+        <Route path="tasks" element={<Lazy><TasksPage /></Lazy>} />
         <Route path="performance" element={<Lazy><ComingSoonPage title="My Performance" chapter="FS11" text="Your leads, conversion, meetings, proposals, won deals and revenue." /></Lazy>} />
         <Route path="profile" element={<Lazy><ProfilePage /></Lazy>} />
         <Route path="control" element={<RoleRoute min="MANAGER" />}>
@@ -49,6 +53,7 @@ export default function App() {
           <Route path="unassigned" element={<Lazy><UnassignedPage /></Lazy>} />
           <Route path="team" element={<Lazy><TeamPage /></Lazy>} />
           <Route path="leads" element={<Lazy><TeamLeadsPage /></Lazy>} />
+          <Route path="sla" element={<Lazy><SlaPage /></Lazy>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

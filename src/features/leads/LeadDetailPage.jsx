@@ -15,6 +15,11 @@ import { PageSkeleton } from "@/components/PageSkeleton";
 import { useActivitiesQuery, useAddNoteMutation, useAssignmentHistoryQuery, useChangeStatusMutation, useLeadQuery } from "@/app/api";
 import { WhatsAppButton } from "@/features/whatsapp/WhatsAppButton";
 import { InsightsPanel } from "@/features/whatsapp/InsightsPanel";
+import { TaskList } from "@/features/work/TaskList";
+import { TaskDialog } from "@/features/work/TaskDialogs";
+import { MeetingDialog } from "@/features/work/MeetingDialogs";
+import { MeetingRow } from "@/features/work/MeetingsPage";
+import { useLeadTasksQuery, useLazyActivitiesQuery } from "@/app/api";
 import { useLeadInsightsQuery } from "@/app/api";
 import { selectScope } from "@/app/authSlice";
 import { ago, dateOnly, dateTime, errorText, inr, prettyPhone, telLink } from "@/lib/format";
@@ -106,12 +111,18 @@ export default function LeadDetailPage() {
         </CardContent>
       </Card>
 
-      {na && lead.status === "open" && (
+      {lead.status === "open" && (lead.followUp ? (
+        // The salesperson's own planned follow-up wins over the system's suggestion (FS08)
+        <div className={cn("flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm", lead.followUp.overdue ? "border-red-200 bg-red-50" : "border-orange-200 bg-orange-50")}>
+          <span><b>Next follow-up:</b> {lead.followUp.title || "Follow up"} <span className="text-muted-foreground">(planned)</span></span>
+          <span className={cn("inline-flex items-center gap-1 text-xs", lead.followUp.overdue ? "font-semibold text-red-600" : "text-muted-foreground")}><Clock className="h-3 w-3" />{lead.followUp.overdue ? "Overdue · " : "Due "}{dateTime(lead.followUp.at)}</span>
+        </div>
+      ) : na && (
         <div className={cn("flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm", na.owner === "human" ? "border-orange-200 bg-orange-50" : "border-emerald-200 bg-emerald-50")}>
           <span><b>Next:</b> {na.label} <span className="text-muted-foreground">({na.owner === "human" ? "you" : "AI"})</span></span>
           {na.dueAt && <span className={cn("inline-flex items-center gap-1 text-xs", lead.overdue ? "font-semibold text-red-600" : "text-muted-foreground")}><Clock className="h-3 w-3" />{lead.overdue ? "Overdue · " : "Due "}{dateTime(na.dueAt)}</span>}
         </div>
-      )}
+      ))}
 
       <Tabs defaultValue="overview">
         <TabsList className="flex h-auto flex-wrap justify-start">
@@ -119,10 +130,11 @@ export default function LeadDetailPage() {
           <TabsTrigger value="ai">AI qualification</TabsTrigger>
           <TabsTrigger value="notes">Notes ({lead.notes?.length || 0})</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="followups">Follow-ups{lead.followUp ? (lead.followUp.overdue ? " ⚠" : " •") : ""}</TabsTrigger>
           <TabsTrigger value="meetings">Meetings</TabsTrigger>
           <TabsTrigger value="kyc">KYC & onboarding</TabsTrigger>
           <TabsTrigger value="assignment">Assignment</TabsTrigger>
-          <TabsTrigger value="soon">WhatsApp · Proposal · Payment</TabsTrigger>
+          <TabsTrigger value="soon">Proposal · Payment</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="grid gap-4 lg:grid-cols-2">
@@ -181,17 +193,17 @@ export default function LeadDetailPage() {
         <TabsContent value="notes"><NotesTab lead={lead} /></TabsContent>
         <TabsContent value="timeline"><TimelineTab id={lead.leadId} /></TabsContent>
 
+        <TabsContent value="followups"><FollowUpsTab lead={lead} /></TabsContent>
+
         <TabsContent value="meetings">
+          <div className="mb-2 flex justify-end"><Button size="sm" onClick={() => setDialog("meeting")}><CalendarDays className="mr-1 h-4 w-4" />Schedule meeting</Button></div>
           {lead.meetings?.length ? (
             <Card><CardContent className="divide-y p-0">
               {lead.meetings.map((m) => (
-                <div key={m._id} className="flex items-center justify-between gap-3 p-3 text-sm">
-                  <div><p className="font-medium">{m.title}</p><p className="text-xs text-muted-foreground">{dateTime(m.startAt)} · {m.status}</p></div>
-                  {m.link && <a className="text-xs text-primary underline" href={m.link} target="_blank" rel="noreferrer">Join</a>}
-                </div>
+                <MeetingRow key={m._id} showLead={false} m={{ id: m._id, title: m.title, type: m.type, start: m.startAt, end: m.endAt, status: m.status, meetLink: m.link, outcome: m.outcome, lead: { id: lead.leadId } }} />
               ))}
             </CardContent></Card>
-          ) : <EmptyState icon={CalendarDays} title="No meetings yet" text="Scheduling meetings from the Sales App comes in FS08." />}
+          ) : <EmptyState icon={CalendarDays} title="No meetings yet" text="Schedule a video (Google Meet), phone or in-person meeting — it lands on your follow-ups with a reminder." />}
         </TabsContent>
 
         <TabsContent value="kyc">
@@ -214,6 +226,7 @@ export default function LeadDetailPage() {
       {dialog === "stage" && <StageDialog lead={lead} open onOpenChange={(o) => !o && setDialog(null)} />}
       {dialog === "lost" && <LostDialog lead={lead} open onOpenChange={(o) => !o && setDialog(null)} />}
       {dialog === "reassign" && <ReassignDialog lead={lead} open onOpenChange={(o) => !o && setDialog(null)} />}
+      {dialog === "meeting" && <MeetingDialog open leadId={lead.leadId} leadName={lead.name} onOpenChange={(o) => !o && setDialog(null)} />}
       <p className="text-center text-[11px] text-muted-foreground"><Link to="/leads" className="underline">My leads</Link></p>
     </div>
   );
@@ -243,21 +256,65 @@ function NotesTab({ lead }) {
   );
 }
 
+const TL_GROUPS = [["", "All"], ["calls", "Calls"], ["messages", "WhatsApp"], ["followups", "Follow-ups"], ["meetings", "Meetings"], ["stage", "Stage"], ["assignment", "Assignment"], ["ai", "AI"], ["notes", "Notes & views"]];
+
 function TimelineTab({ id }) {
-  const { data, isLoading } = useActivitiesQuery(id);
-  if (isLoading) return <PageSkeleton />;
+  const [group, setGroup] = useState("");
+  const [older, setOlder] = useState([]);
+  const [more, setMore] = useState(null);
+  const { data, isLoading } = useActivitiesQuery({ id, group });
+  const [loadOlder, { isFetching }] = useLazyActivitiesQuery();
+  const items = [...(data?.activities || []), ...older];
+  const pick = (g) => { setGroup(g); setOlder([]); setMore(null); };
+  const fetchOlder = async () => {
+    const last = items[items.length - 1];
+    if (!last) return;
+    const r = await loadOlder({ id, group, before: last.at }).unwrap();
+    setOlder((o) => [...o, ...r.activities]);
+    setMore(r.hasMore);
+  };
+  const hasMore = more ?? data?.hasMore;
   return (
-    <Card><CardContent className="p-4">
-      <ol className="relative space-y-4 border-l pl-5">
-        {(data?.activities || []).map((a, i) => (
-          <li key={i} className="text-sm">
-            <span className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-background bg-primary" />
-            <p>{a.summary || a.type.replace(/_/g, " ").toLowerCase()}</p>
-            <p className="text-xs text-muted-foreground">{dateTime(a.at)}{a.by ? ` · ${a.by}` : ""}</p>
-          </li>
-        ))}
-      </ol>
+    <Card><CardContent className="space-y-3 p-4">
+      <div className="flex flex-wrap gap-1">
+        {TL_GROUPS.map(([v, l]) => <button key={v || "all"} type="button" onClick={() => pick(v)} className={cn("rounded-full border px-2.5 py-0.5 text-xs", group === v ? "border-red-200 bg-red-50 font-semibold text-red-700" : "hover:bg-muted")}>{l}</button>)}
+      </div>
+      {isLoading ? <PageSkeleton /> : !items.length ? <p className="text-sm text-muted-foreground">Nothing here yet.</p> : (
+        <ol className="relative space-y-4 border-l pl-5">
+          {items.map((a, i) => (
+            <li key={i} className="text-sm">
+              <span className={cn("absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-background", /MISSED|ESCALATED/.test(a.type) ? "bg-red-500" : /AI_/.test(a.type) ? "bg-emerald-500" : "bg-primary")} />
+              <p>{a.summary || a.type.replace(/_/g, " ").toLowerCase()}</p>
+              <p className="text-xs text-muted-foreground">{dateTime(a.at)}{a.by ? ` · ${a.by}` : ""}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+      {hasMore && <div className="text-center"><Button variant="outline" size="sm" disabled={isFetching} onClick={fetchOlder}>{isFetching ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}Older</Button></div>}
     </CardContent></Card>
+  );
+}
+
+// §31 — this lead's follow-ups: open ones first, then the history
+function FollowUpsTab({ lead }) {
+  const { data, isLoading } = useLeadTasksQuery(lead.leadId);
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <p className="text-sm text-muted-foreground">{lead.followUp ? `Next: ${dateTime(lead.followUp.at)}${lead.followUp.overdue ? " — overdue" : ""}` : "No follow-up planned — the AI keeps nudging on WhatsApp until you plan one."}</p>
+        <Button size="sm" className="ml-auto" onClick={() => setOpen(true)}><CalendarDays className="mr-1 h-4 w-4" />Plan follow-up</Button>
+      </div>
+      {isLoading ? <PageSkeleton /> : (
+        <>
+          <Card><CardContent className="p-0"><TaskList items={data?.open || []} showLead={false} showDate empty={<p className="p-4 text-sm text-muted-foreground">Nothing open.</p>} /></CardContent></Card>
+          {data?.done?.length > 0 && (
+            <Card><CardHeader className="pb-1"><CardTitle className="text-sm">Done</CardTitle></CardHeader><CardContent className="p-0"><TaskList items={data.done} showLead={false} showDate /></CardContent></Card>
+          )}
+        </>
+      )}
+      {open && <TaskDialog open leadId={lead.leadId} leadName={lead.name} onOpenChange={setOpen} />}
+    </div>
   );
 }
 

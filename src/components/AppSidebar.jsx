@@ -3,7 +3,7 @@ import { activeNavUrl, NAV_ACTIVE, NAV_IDLE } from "@/lib/activeNav";
 import { useSelector } from "react-redux";
 import {
   LayoutDashboard, Users, Flame, MessagesSquare, CalendarClock, CalendarDays, FileText, IndianRupee,
-  ListChecks, TrendingUp, UserCircle, Inbox, UsersRound, Table2,
+  ListChecks, TrendingUp, UserCircle, Inbox, UsersRound, Table2, Timer,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { selectScope } from "@/app/authSlice";
 import { hasSalesRole } from "@/lib/roles";
-import { useConversationsQuery, useLeadCountsQuery } from "@/app/api";
+import { useConversationsQuery, useFollowUpsQuery, useLeadCountsQuery } from "@/app/api";
 
 // §6 — only what a salesperson needs; nothing from the admin dashboard
 const MAIN = [
@@ -19,11 +19,11 @@ const MAIN = [
   { title: "My Leads", url: "/leads", icon: Users },
   { title: "Hot Leads", url: "/hot-leads", icon: Flame, badge: "hot" },
   { title: "WhatsApp", url: "/whatsapp", icon: MessagesSquare, badge: "unread" },
-  { title: "Follow-ups", url: "/follow-ups", icon: CalendarClock, soon: true },
-  { title: "Meetings", url: "/meetings", icon: CalendarDays, soon: true },
+  { title: "Follow-ups", url: "/follow-ups", icon: CalendarClock, badge: "overdue" },
+  { title: "Meetings", url: "/meetings", icon: CalendarDays },
   { title: "Proposals", url: "/proposals", icon: FileText, soon: true },
   { title: "Payments", url: "/payments", icon: IndianRupee, soon: true },
-  { title: "Tasks", url: "/tasks", icon: ListChecks, soon: true },
+  { title: "Tasks", url: "/tasks", icon: ListChecks },
   { title: "My Performance", url: "/performance", icon: TrendingUp, soon: true },
   { title: "Profile", url: "/profile", icon: UserCircle },
 ];
@@ -31,6 +31,7 @@ const CONTROL = [
   { title: "Unassigned Leads", url: "/control/unassigned", icon: Inbox },
   { title: "Team Leads", url: "/control/leads", icon: Table2 },
   { title: "Team", url: "/control/team", icon: UsersRound },
+  { title: "SLA rules", url: "/control/sla", icon: Timer },
 ];
 
 function Item({ item, badge, active }) {
@@ -43,7 +44,7 @@ function Item({ item, badge, active }) {
           {item.soon && <span className="ml-auto rounded bg-muted px-1.5 text-[10px] text-muted-foreground">soon</span>}
         </NavLink>
       </SidebarMenuButton>
-      {badge ? <SidebarMenuBadge className={item.badge === "unread" ? "bg-emerald-500 text-white" : "bg-orange-500 text-white"}>{badge}</SidebarMenuBadge> : null}
+      {badge ? <SidebarMenuBadge className={item.badge === "unread" ? "bg-emerald-500 text-white" : item.badge === "overdue" ? "bg-red-600 text-white" : "bg-orange-500 text-white"}>{badge}</SidebarMenuBadge> : null}
     </SidebarMenuItem>
   );
 }
@@ -52,6 +53,7 @@ export function AppSidebar() {
   const scope = useSelector(selectScope);
   const { data } = useLeadCountsQuery(undefined, { pollingInterval: 0 });
   const { data: wa } = useConversationsQuery({ limit: 1 });
+  const { data: fu } = useFollowUpsQuery({ view: "overdue" }, { pollingInterval: 120000 });
   const isManager = hasSalesRole(scope, "MANAGER");
   const { pathname } = useLocation();
   const current = activeNavUrl(pathname, [...MAIN, ...(isManager ? CONTROL : [])].map((i) => i.url));
@@ -70,7 +72,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {MAIN.map((item) => <Item key={item.url} item={item} active={current === item.url} badge={item.badge === "hot" ? data?.counts?.hot || null : item.badge === "unread" ? wa?.counts?.unread || null : null} />)}
+              {MAIN.map((item) => <Item key={item.url} item={item} active={current === item.url} badge={item.badge === "hot" ? data?.counts?.hot || null : item.badge === "unread" ? wa?.counts?.unread || null : item.badge === "overdue" ? fu?.counts?.overdue || null : null} />)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
