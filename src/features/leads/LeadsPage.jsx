@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/LeadBits";
-import { useLeadCountsQuery, useLeadsQuery } from "@/app/api";
+import { useLeadCountsQuery, useLeadsQuery, useMetaQuery, useTagsQuery } from "@/app/api";
+import { MultiSelect, StageCounts } from "@/components/LeadFields";
 import { selectTeam } from "@/app/authSlice";
 import { FILTER_LABELS } from "@/lib/stages";
 import { LeadsTable } from "./LeadsTable";
@@ -28,6 +29,12 @@ export default function LeadsPage({ mode = "my" }) {
   const sort = params.get("sort") || (mode === "hot" ? "score" : mode === "my" ? "priority" : "recent");   // FS12: My Leads = call first
   const page = Number(params.get("page") || 1);
   const owner = params.get("owner") || "";
+  const list = (k) => (params.get(k) || "").split(",").filter(Boolean);
+  const stages = list("stages");
+  const tags = list("tags");
+  const intent = params.get("intent") || "";
+  const { data: meta } = useMetaQuery();
+  const { data: tagData } = useTagsQuery();
   const [q, setQ] = useState(params.get("q") || "");
 
   // Debounced search → URL (so back / refresh keep the view)
@@ -51,7 +58,9 @@ export default function LeadsPage({ mode = "my" }) {
   const { data, isFetching, isLoading } = useLeadsQuery({
     mode: apiMode, ...(filter !== "all" && mode !== "hot" ? { filter } : {}), sort, page, limit: 25,
     ...(q.trim() ? { q: q.trim() } : {}), ...(mode === "team" && owner ? { owner } : {}),
+    ...(stages.length ? { stages: stages.join(",") } : {}), ...(tags.length ? { tags: tags.join(",") } : {}), ...(intent ? { pipeline: intent } : {}),
   });
+  const toggleStage = (s) => update({ stages: (stages.includes(s) ? stages.filter((x) => x !== s) : [...stages, s]).join(","), page: 1 });
   const { data: countData } = useLeadCountsQuery(mode === "my" ? { mine: "1" } : mode === "team" && owner ? { owner } : {});
   const counts = countData?.counts || {};
   const [title, sub] = TITLES[mode];
@@ -78,6 +87,8 @@ export default function LeadsPage({ mode = "my" }) {
         </div>
       )}
 
+      <StageCounts total={data?.totalAll} stageCounts={data?.stageCounts} selected={stages} onToggle={toggleStage} onClear={() => update({ stages: "", page: 1 })} />
+
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -92,6 +103,17 @@ export default function LeadsPage({ mode = "my" }) {
             </SelectContent>
           </Select>
         )}
+        <MultiSelect label="Stage" className="w-44" value={stages} onChange={(v) => update({ stages: v.join(","), page: 1 })}
+          options={(meta?.stages || []).map((s) => ({ value: s.key, label: s.label, count: data?.stageCounts?.find((x) => x.stage === s.key)?.count ?? 0 }))} />
+        <Select value={intent || "any"} onValueChange={(v) => update({ intent: v === "any" ? "" : v, page: 1 })}>
+          <SelectTrigger className="w-44"><span className="text-muted-foreground">Intent:</span><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="any">All</SelectItem>
+            {(meta?.intents || []).map((i) => <SelectItem key={i.key} value={i.key}>{i.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <MultiSelect label="Tag" className="w-44" value={tags} onChange={(v) => update({ tags: v.join(","), page: 1 })} emptyText="No tags yet — add one on a lead"
+          options={(tagData?.tags || []).map((t) => ({ value: t.name, label: t.name, count: t.count }))} />
         <Select value={sort} onValueChange={(v) => update({ sort: v, page: 1 })}>
           <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
           <SelectContent>{SORTS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
@@ -107,10 +129,10 @@ export default function LeadsPage({ mode = "my" }) {
         </div>
       )}
 
-      {data && data.pages > 1 && (
+      {data && (
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{data.total} leads · page {data.page} of {data.pages}</span>
-          <div className="flex gap-2">
+          <span className="text-muted-foreground">Showing {data.leads.length} of {data.total} leads{data.pages > 1 ? ` · page ${data.page} of ${data.pages}` : ""}</span>
+          <div className={cn("flex gap-2", data.pages <= 1 && "hidden")}>
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => update({ page: page - 1 })}><ChevronLeft className="h-4 w-4" /></Button>
             <Button variant="outline" size="sm" disabled={page >= data.pages} onClick={() => update({ page: page + 1 })}><ChevronRight className="h-4 w-4" /></Button>
           </div>

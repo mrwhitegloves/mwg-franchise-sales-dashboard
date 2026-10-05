@@ -5,16 +5,17 @@ import { BAND, PRIORITY, stageClass } from "@/lib/stages";
 import { cn } from "@/lib/utils";
 
 export function StageBadge({ stage, label, status, lostReason }) {
-  if (status === "lost") return <span className="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Lost{lostReason ? ` · ${lostReason.replace(/_/g, " ").toLowerCase()}` : ""}</span>;
-  if (status === "won" && !["onboarding", "activated", "kyc_pending", "kyc_completed"].includes(stage)) return <span className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Won · {label}</span>;
-  return <span className={cn("inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium", stageClass(stage))}>{label || stage || "—"}</span>;
+  const pre = <span className="mr-1 font-normal opacity-70">Stage:</span>;
+  if (status === "lost") return <span className="inline-flex items-center whitespace-nowrap rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">{pre}Lost{lostReason ? ` · ${lostReason.replace(/_/g, " ").toLowerCase()}` : ""}</span>;
+  if (status === "won" && !["onboarding", "activated", "kyc_pending", "kyc_completed"].includes(stage)) return <span className="inline-flex items-center whitespace-nowrap rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">{pre}Won · {label}</span>;
+  return <span className={cn("inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium", stageClass(stage))}>{pre}{label || stage || "—"}</span>;
 }
 
 export function ScoreBadge({ score, band, hot }) {
   const b = BAND[band];
   return (
     <span className="inline-flex items-center gap-1">
-      <span className={cn("inline-flex min-w-[2rem] justify-center rounded px-1.5 py-0.5 text-xs font-semibold", b?.className || "bg-slate-100 text-slate-600")} title={b?.label}>{score ?? "—"}</span>
+      <span className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-semibold", b?.className || "bg-slate-100 text-slate-600")} title="AI lead score"><span className="font-normal opacity-80">Score:</span>{score ?? "—"}{b?.label ? ` ${b.label.toUpperCase()}` : ""}</span>
       {hot && <Flame className="h-3.5 w-3.5 text-orange-500" />}
     </span>
   );

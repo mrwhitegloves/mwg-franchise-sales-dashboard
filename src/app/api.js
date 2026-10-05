@@ -33,7 +33,15 @@ export const salesApi = baseApi.injectEndpoints({
     }),
     changeStatus: b.mutation({
       query: ({ id, ...body }) => ({ url: `/leads/${id}/status`, method: "POST", body }),
-      invalidatesTags: (r, e, { id }) => [{ type: "Lead", id }, ...LIST_TAGS],
+      invalidatesTags: (r, e, { id }) => [{ type: "Lead", id }, ...LIST_TAGS, "Conversations", "Conversation", "Unassigned"],
+    }),
+    // ── lead tags (the team's own labels) ────────────────
+    tags: b.query({ query: () => "/tags", providesTags: ["Tags"] }),
+    createTag: b.mutation({ query: (name) => ({ url: "/tags", method: "POST", body: { name } }), invalidatesTags: ["Tags"] }),
+    deleteTag: b.mutation({ query: (id) => ({ url: `/tags/${id}`, method: "DELETE" }), invalidatesTags: ["Tags", "Leads", "Lead", "Conversations", "Conversation", "Unassigned"] }),
+    setLeadTags: b.mutation({
+      query: ({ id, tags }) => ({ url: `/leads/${id}/tags`, method: "PUT", body: { tags } }),
+      invalidatesTags: (r, e, { id }) => [{ type: "Lead", id }, "Leads", "Tags", "Conversations", "Conversation", "Unassigned"],
     }),
     leadEdit: b.query({ query: (id) => `/leads/${id}/edit`, providesTags: (r, e, id) => [{ type: "Lead", id }] }),
     editDetails: b.mutation({
@@ -169,6 +177,7 @@ export const {
   useTeamQuery, useUpdateTeamMemberMutation, useUnassignedQuery, useAssignLeadMutation, useReassignLeadMutation, useBulkAssignMutation,
   useAssignmentSettingsQuery, useUpdateAssignmentSettingsMutation, useTerritoriesQuery, useSaveTerritoryMutation, useDeleteTerritoryMutation,
   useControlOverviewQuery, useControlPerformanceQuery, usePersonAuditQuery, useLazyPersonAuditQuery, useControlReportQuery, useControlActivitiesQuery, useLazyControlActivitiesQuery, useMyPerformanceQuery, useAskAssistantMutation, useAssistantSuggestionsQuery,
+  useTagsQuery, useCreateTagMutation, useDeleteTagMutation, useSetLeadTagsMutation,
   useConversationsQuery, useConversationQuery, useLazyConversationQuery, useLeadConversationQuery, useStartConversationMutation, useWaTemplatesQuery,
   useSendWhatsappMutation, useSendWhatsappFileMutation, useSendWhatsappTemplateMutation, useMarkConversationReadMutation,
   useSetChatModeMutation, useChatInsightsQuery, useLeadInsightsQuery, useSuggestRepliesMutation,

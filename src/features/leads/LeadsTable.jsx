@@ -7,6 +7,7 @@ import { Phone, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StageBadge, ScoreBadge, NextAction } from "@/components/LeadBits";
+import { IntentBadge, TagChips } from "@/components/LeadFields";
 import { ago, dateTime, inrShort, prettyPhone, telLink } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ export function LeadsTable({ leads = [], loading, showOwner = false, compact = f
           <div className="min-w-0">
             <p className="truncate font-medium">{l.name || "—"}</p>
             <p className="text-xs text-muted-foreground">{l.leadCode} · {l.source || "—"}</p>
+            {(l.intentLabel || l.tags?.length > 0) && <div className="mt-1 flex flex-wrap items-center gap-1"><IntentBadge label={l.intentLabel} /><TagChips tags={l.tags} max={2} /></div>}
           </div>
         ),
       },
@@ -37,7 +39,7 @@ export function LeadsTable({ leads = [], loading, showOwner = false, compact = f
       },
       { id: "city", header: "City", cell: ({ row: { original: l } }) => <span className="whitespace-nowrap">{l.city || "—"}</span> },
       { id: "score", header: "Score", cell: ({ row: { original: l } }) => <ScoreBadge score={l.leadScore} band={l.band} hot={l.hot} /> },
-      { id: "stage", header: "Status", cell: ({ row: { original: l } }) => <StageBadge stage={l.stage} label={l.stageLabel} status={l.status} lostReason={l.lostReason} /> },
+      { id: "stage", header: "Stage", cell: ({ row: { original: l } }) => <StageBadge stage={l.stage} label={l.stageLabel} status={l.status} lostReason={l.lostReason} /> },
       // FS12: what to do next + why this lead is high on the call-first list
       { id: "action", header: "Next best action", cell: ({ row: { original: l } }) => <NextAction p={l.callPriority} /> },
       ...(compact ? [] : [{ id: "contact", header: "Last contact", cell: ({ row: { original: l } }) => <span className="whitespace-nowrap text-xs text-muted-foreground">{l.lastContactAt ? ago(l.lastContactAt) : "—"}</span> }]),
@@ -97,6 +99,7 @@ export function LeadsTable({ leads = [], loading, showOwner = false, compact = f
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <StageBadge stage={l.stage} label={l.stageLabel} status={l.status} lostReason={l.lostReason} />
+              <IntentBadge label={l.intentLabel} /><TagChips tags={l.tags} max={2} />
               {l.callPriority?.action && <NextAction p={l.callPriority} />}
               {l.nextFollowUpAt && <span className={cn("text-xs", l.overdue ? "font-semibold text-red-600" : "text-muted-foreground")}>Next: {dateTime(l.nextFollowUpAt)}</span>}
               {showOwner && <span className="text-xs text-muted-foreground">· {l.owner?.name || "Unassigned"}</span>}

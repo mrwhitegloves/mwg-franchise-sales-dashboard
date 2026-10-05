@@ -72,3 +72,5 @@ export function fileKind(mimeType = "", fileName = "") {
 
 export const fileSize = (b) => (!b ? "" : b >= 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
+// Number of values ticked in the WhatsApp filter modal
+export const countFilters = (f = {}) => (f.owners?.length || 0) + (f.tags?.length || 0) + (f.stages?.length || 0);

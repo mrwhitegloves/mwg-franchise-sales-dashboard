@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { MessagesSquare, Search, ShieldCheck, Bot, User, Flame, Loader2 } from "lucide-react";
+import { MessagesSquare, Search, ShieldCheck, Bot, User, Flame, Loader2, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,10 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { errorText } from "@/lib/format";
 import { hasSalesRole } from "@/lib/roles";
-import { selectScope, selectTeam } from "@/app/authSlice";
-import { useConversationsQuery } from "@/app/api";
+import { selectScope, selectTeam, selectUser } from "@/app/authSlice";
+import { useConversationsQuery, useMetaQuery, useTagsQuery } from "@/app/api";
+import { TagChips } from "@/components/LeadFields";
+import { WaFilterChips, WaFilterDialog } from "./WaFilters";
 import { ChatPanel } from "./ChatPanel";
-import { avatarColor, initials, listTime, previewText } from "./waUtils";
+import { avatarColor, countFilters, initials, listTime, previewText } from "./waUtils";
 
 const FILTERS = [
   ["", "All"], ["unread", "Unread"], ["needs_reply", "Needs reply"], ["window_open", "Can reply (24h)"], ["human", "AI paused"],
@@ -46,7 +48,8 @@ function Row({ c, active, onOpen }) {
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px]">
           {c.leadCode && <span className="rounded bg-muted px-1 font-mono">{c.leadCode}</span>}
-          {c.stageLabel && <span className="rounded bg-muted px-1">{c.stageLabel}</span>}
+          {c.stageLabel && <span className="rounded bg-muted px-1">Stage: {c.stageLabel}</span>}
+          <TagChips tags={c.tags} max={2} />
           {c.needsReply && <span className="rounded bg-amber-100 px-1 text-amber-800">needs reply</span>}
           {!c.window.open && <span className="rounded bg-slate-100 px-1 text-slate-600">template only</span>}
           {c.owner ? <span className="text-muted-foreground">· {c.owner.name}</span> : <span className="rounded bg-red-100 px-1 text-red-700">unassigned</span>}
@@ -68,8 +71,25 @@ export default function WhatsAppPage() {
   const [q, setQ] = useState(params.get("q") || "");
   const dq = useDebounced(q);
   const [limit, setLimit] = useState(30);
+  // Filter modal (Assigned to · Tags · Stages) — kept in the URL so refresh / back keep it
+  const me = useSelector(selectUser);
+  const { data: meta } = useMetaQuery();
+  const { data: tagData } = useTagsQuery();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const csv = (k) => (params.get(k) || "").split(",").filter(Boolean);
+  const applied = { owners: isManager ? csv("owners") : [], tags: csv("tags"), stages: csv("stages") };
+  const people = [...(me && !team.some((m) => m._id === me._id) ? [{ value: me._id, label: `${me.name} (me)` }] : []), ...team.map((m) => ({ value: m._id, label: m.name })), { value: "none", label: "None (unassigned)" }];
+  const sections = [
+    ...(isManager ? [{ key: "owners", label: "Assigned to", chip: "Assigned to", options: people }] : []),
+    { key: "tags", label: "Tags", chip: "Tag", options: (tagData?.tags || []).map((t) => ({ value: t.name, label: t.name, count: t.count })), emptyText: "No tags yet — open a chat and add the first tag." },
+    { key: "stages", label: "Lead stages", chip: "Stage", options: (meta?.stages || []).map((s) => ({ value: s.key, label: s.label })) },
+  ];
+  const applyFilters = (f) => set({ owners: (f.owners || []).join(","), tags: (f.tags || []).join(","), stages: (f.stages || []).join(",") });
 
-  const query = { ...(filter ? { filter } : {}), ...(dq.trim() ? { q: dq.trim() } : {}), ...(isManager && owner ? { owner } : {}), limit };
+  const query = {
+    ...(filter ? { filter } : {}), ...(dq.trim() ? { q: dq.trim() } : {}), ...(isManager && owner ? { owner } : {}), limit,
+    ...(applied.owners.length ? { owners: applied.owners.join(",") } : {}), ...(applied.tags.length ? { tags: applied.tags.join(",") } : {}), ...(applied.stages.length ? { stages: applied.stages.join(",") } : {}),
+  };
   const { data, isLoading, isFetching, error } = useConversationsQuery(query);
   const set = (patch) => {
     const next = new URLSearchParams(params);
@@ -90,7 +110,12 @@ export default function WhatsAppPage() {
             <MessagesSquare className="h-5 w-5 text-primary" />
             <h1 className="text-base font-semibold">WhatsApp</h1>
             {isFetching && !isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+            <Button variant={countFilters(applied) ? "secondary" : "ghost"} size="sm" className="relative ml-auto h-8 px-2" onClick={() => setFiltersOpen(true)} title="Filters" aria-label="Filters">
+              <SlidersHorizontal className="h-4 w-4" />
+              {countFilters(applied) > 0 && <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">{countFilters(applied)}</span>}
+            </Button>
           </div>
+          <WaFilterChips value={applied} sections={sections} onChange={applyFilters} />
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input className="h-9 pl-9" placeholder="Name, phone or FRN code" value={q} onChange={(e) => { setQ(e.target.value); setLimit(30); }} />
@@ -125,7 +150,7 @@ export default function WhatsAppPage() {
           {data && !list.length && (
             <div className="p-8 text-center text-sm text-muted-foreground">
               <MessagesSquare className="mx-auto mb-2 h-8 w-8 opacity-40" />
-              {filter || dq ? "No conversation matches." : "No WhatsApp conversations yet. Chats of your franchise leads appear here."}
+              {filter || dq || countFilters(applied) ? "No conversation matches." : "No WhatsApp conversations yet. Chats of your franchise leads appear here."}
             </div>
           )}
           {list.map((c) => <Row key={c.conversationId} c={c} active={c.conversationId === id} onOpen={() => open(c.conversationId)} />)}
@@ -137,6 +162,8 @@ export default function WhatsAppPage() {
           <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />Messages go from the official Mr. White Gloves number.
         </p>
       </aside>
+
+      <WaFilterDialog open={filtersOpen} onOpenChange={setFiltersOpen} value={applied} onApply={applyFilters} sections={sections} />
 
       {/* Open conversation */}
       <section className={cn("min-w-0 flex-1", !id && "hidden lg:block")}>

@@ -25,6 +25,7 @@ import { useLeadInsightsQuery } from "@/app/api";
 import { selectScope } from "@/app/authSlice";
 import { ago, dateTime, errorText, inr, prettyPhone, telLink } from "@/lib/format";
 import { EditLeadSheet } from "./EditLeadSheet";
+import { IntentBadge, LeadTagsEditor } from "@/components/LeadFields";
 import { LostDialog, ReassignDialog, StageDialog } from "./LeadActions";
 import { cn } from "@/lib/utils";
 
@@ -90,7 +91,9 @@ export default function LeadDetailPage() {
               <StageBadge stage={lead.stage} label={lead.stageLabel} status={lead.status} lostReason={lead.lostReason} />
               <ScoreBadge score={lead.leadScore} band={lead.band} hot={lead.hot} />
               <PriorityBadge priority={lead.priority} />
+              <IntentBadge label={lead.intentLabel} />
             </div>
+            <div className="flex flex-wrap items-center gap-1"><LeadTagsEditor leadId={lead.leadId} tags={lead.tags} /></div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <a href={telLink(lead.phone)} className="inline-flex items-center gap-1 hover:text-primary"><Phone className="h-3.5 w-3.5" />{prettyPhone(lead.phone)}</a>
               <span>{[lead.city, lead.state].filter(Boolean).join(", ") || "—"}</span>

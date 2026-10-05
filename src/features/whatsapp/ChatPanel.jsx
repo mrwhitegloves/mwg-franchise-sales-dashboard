@@ -17,6 +17,7 @@ import {
   useChatInsightsQuery, useConversationQuery, useLazyConversationQuery, useMarkConversationReadMutation, useSendWhatsappFileMutation, useSendWhatsappMutation,
 } from "@/app/api";
 import { DraftBanner, ModeSwitch, SuggestPanel } from "./AiAssistBits";
+import { IntentBadge, LeadTagsEditor, StageSelect } from "@/components/LeadFields";
 import { InsightsPanel } from "./InsightsPanel";
 import ChatBubble, { ReplyQuote } from "./ChatBubble";
 import { TemplateDialog } from "./TemplateDialog";
@@ -223,6 +224,13 @@ export function ChatPanel({ conversationId, onBack }) {
         <ModeSwitch conversationId={conversationId} mode={conv.aiMode} />
         <Button variant={insightsUi.open ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={insightsUi.toggle} aria-label="AI insights" title="AI qualification + conversation summary"><Brain className="h-4 w-4" /></Button>
         <Button asChild variant="outline" size="sm" className="h-8"><Link to={`/leads/${conv.leadId}`}><ExternalLink className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Lead</span></Link></Button>
+      </div>
+
+      {/* Lead fields: stage + tags can be changed without leaving the chat */}
+      <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b bg-card px-3 py-1.5">
+        <StageSelect leadId={conv.leadId} stage={conv.stage} stageLabel={conv.stageLabel} status={conv.status} />
+        <IntentBadge label={conv.intentLabel} />
+        <LeadTagsEditor leadId={conv.leadId} tags={conv.tags} />
       </div>
 
       {/* Messages */}

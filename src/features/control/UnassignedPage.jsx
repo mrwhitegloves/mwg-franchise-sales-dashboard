@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState, ScoreBadge } from "@/components/LeadBits";
+import { MultiSelect, StageCounts, TagChips } from "@/components/LeadFields";
+import { useMetaQuery, useTagsQuery } from "@/app/api";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { useBulkAssignMutation, useUnassignedQuery } from "@/app/api";
 import { selectTeam, selectUser } from "@/app/authSlice";
@@ -19,12 +21,16 @@ export default function UnassignedPage() {
   const [q, setQ] = useState("");
   const [reason, setReason] = useState("");
   const [page, setPage] = useState(1);
+  const [stages, setStages] = useState([]);
+  const [tags, setTags] = useState([]);
+  const { data: meta } = useMetaQuery();
+  const { data: tagData } = useTagsQuery();
   const [picked, setPicked] = useState(new Set());
   const [to, setTo] = useState("");
   const team = useSelector(selectTeam);
   const me = useSelector(selectUser);
   const navigate = useNavigate();
-  const { data, isLoading, isFetching } = useUnassignedQuery({ page, limit: 50, ...(q.trim() ? { search: q.trim() } : {}), ...(reason ? { reason } : {}) });
+  const { data, isLoading, isFetching } = useUnassignedQuery({ page, limit: 50, ...(q.trim() ? { search: q.trim() } : {}), ...(reason ? { reason } : {}), ...(stages.length ? { stages: stages.join(",") } : {}), ...(tags.length ? { tags: tags.join(",") } : {}) });
   const [bulk, { isLoading: assigning }] = useBulkAssignMutation();
   const execs = team.filter((m) => m.isActive !== false && m.salesRole === "FRANCHISE_SALES_EXECUTIVE");
 
@@ -60,7 +66,13 @@ export default function UnassignedPage() {
         ))}
       </div>
 
+      <StageCounts total={data?.totalAll} stageCounts={data?.stageCounts} selected={stages} onToggle={(s) => { setStages((x) => (x.includes(s) ? x.filter((y) => y !== s) : [...x, s])); setPage(1); }} onClear={() => { setStages([]); setPage(1); }} />
+
       <div className="flex flex-wrap items-center gap-2">
+        <MultiSelect label="Stage" className="w-44" value={stages} onChange={(v) => { setStages(v); setPage(1); }}
+          options={(meta?.stages || []).map((s) => ({ value: s.key, label: s.label, count: data?.stageCounts?.find((x) => x.stage === s.key)?.count ?? 0 }))} />
+        <MultiSelect label="Tag" className="w-44" value={tags} onChange={(v) => { setTags(v); setPage(1); }} emptyText="No tags yet — add one on a lead"
+          options={(tagData?.tags || []).map((t) => ({ value: t.name, label: t.name, count: t.count }))} />
         <div className="relative min-w-[220px] flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder="Search name, FRN code, city, phone" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
@@ -91,7 +103,7 @@ export default function UnassignedPage() {
               {leads.map((l) => (
                 <TableRow key={l.leadId} className="cursor-pointer" onClick={() => navigate(`/leads/${l.leadId}`)}>
                   <TableCell onClick={(e) => e.stopPropagation()}><input type="checkbox" className="h-4 w-4 accent-primary" checked={picked.has(l.leadId)} onChange={() => toggle(l.leadId)} /></TableCell>
-                  <TableCell><p className="font-medium">{l.name || "—"} {l.hot && <Flame className="inline h-3.5 w-3.5 text-orange-500" />}</p><p className="text-xs text-muted-foreground">{l.leadCode} · {l.stage}</p></TableCell>
+                  <TableCell><p className="font-medium">{l.name || "—"} {l.hot && <Flame className="inline h-3.5 w-3.5 text-orange-500" />}</p><p className="text-xs text-muted-foreground">{l.leadCode} · Stage: {l.stage || "—"}</p>{l.tags?.length > 0 && <div className="mt-1 flex flex-wrap gap-1"><TagChips tags={l.tags} max={2} /></div>}</TableCell>
                   <TableCell className="text-xs">{l.source}</TableCell>
                   <TableCell className="text-xs">{[l.city, l.state].filter(Boolean).join(", ") || "—"}</TableCell>
                   <TableCell><ScoreBadge score={l.score} band={l.band} hot={l.hot} /></TableCell>
