@@ -1,4 +1,4 @@
-// FS09 — lead page tabs: Proposals, Payments, KYC & onboarding (read-only)
+// FS09 — lead page tabs: Proposals, Payments, KYC & onboarding (KYC links: KycDeals.jsx)
 import { useState } from "react";
 import { CheckCircle2, Circle, CircleDot, FileText, IndianRupee, MinusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { useLeadOnboardingQuery, useLeadPaymentsQuery, useLeadProposalsQuery } f
 import { ProposalDialog } from "./ProposalDialog";
 import { ProposalRow } from "./ProposalList";
 import { PaymentRow, RequestPaymentDialog } from "./PaymentList";
+import { KycDeals } from "./KycDeals";
 
 export function ProposalsTab({ lead }) {
   const { data, isLoading } = useLeadProposalsQuery(lead.leadId);
@@ -54,7 +55,12 @@ export function OnboardingTab({ lead }) {
   if (isLoading) return <PageSkeleton />;
   const onb = data?.onboarding;
   const kyc = data?.kyc;
+  const hasDeals = (data?.deals || []).length > 0;
   return (
+    <div className="space-y-4">
+    <KycDeals lead={lead} data={data} />
+    {/* Older onboarding records (before KYC links) stay visible */}
+    {(onb || (kyc && !hasDeals)) && (
     <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-base">Onboarding{onb ? ` · ${onb.code}` : ""}</CardTitle></CardHeader>
@@ -94,6 +100,8 @@ export function OnboardingTab({ lead }) {
           )}
         </CardContent>
       </Card>
+    </div>
+    )}
     </div>
   );
 }

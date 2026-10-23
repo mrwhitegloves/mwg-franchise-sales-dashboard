@@ -158,6 +158,8 @@ export const salesApi = baseApi.injectEndpoints({
     cancelPayment: b.mutation({ query: ({ id, reason }) => ({ url: `/payments/${id}/cancel`, method: "POST", body: { reason } }), invalidatesTags: ["Payments", "Lead", "Leads"] }),
     verifyPayment: b.mutation({ query: ({ id, ...body }) => ({ url: `/payments/${id}/verify`, method: "POST", body }), invalidatesTags: ["Payments", "Lead", "Leads", "Dashboard", "Revenue"] }),
     leadOnboarding: b.query({ query: (leadId) => `/leads/${leadId}/onboarding`, providesTags: ["Payments"] }),
+    // Unique franchise KYC link for a lead (never expires)
+    createKycLink: b.mutation({ query: ({ leadId, ...body }) => ({ url: `/leads/${leadId}/kyc-link`, method: "POST", body }), invalidatesTags: ["Payments", "Lead"] }),
     revenue: b.query({ query: (params = {}) => ({ url: "/revenue", params }), providesTags: ["Revenue"] }),
     // ── notifications (FS10) ──────────────────────────────
     notifications: b.query({ query: (params = {}) => ({ url: "/notifications", params }), providesTags: ["Notifications"] }),
@@ -186,5 +188,5 @@ export const {
   useProposalsQuery, useLeadProposalsQuery, useProposalSettingsQuery, useUpdateProposalSettingsMutation, useCreateProposalMutation, useProposalPdfMutation,
   useSendProposalMutation, useProposalOutcomeMutation, useDecideDiscountMutation, usePaymentsQuery, useLeadPaymentsQuery, useRequestPaymentMutation,
   useNotificationsQuery, useLazyNotificationsQuery, useReadNotificationMutation, useClearNotificationMutation, useNotificationPrefsQuery, useUpdateNotificationPrefsMutation,
-  useSendPaymentLinkMutation, useCheckPaymentMutation, useSubmitProofMutation, useCancelPaymentMutation, useVerifyPaymentMutation, useLeadOnboardingQuery, useRevenueQuery,
+  useSendPaymentLinkMutation, useCheckPaymentMutation, useSubmitProofMutation, useCancelPaymentMutation, useVerifyPaymentMutation, useLeadOnboardingQuery, useCreateKycLinkMutation, useRevenueQuery,
 } = salesApi;
