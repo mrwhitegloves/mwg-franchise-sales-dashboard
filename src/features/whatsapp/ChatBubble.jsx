@@ -42,10 +42,9 @@ export function ReplyQuote({ quote, onJump, compact = false }) {
   );
 }
 
-function MediaBlock({ msg }) {
+function MediaBlock({ msg, type = msg.messageType }) {
   const media = msg.media || {};
   const url = media.url || msg.mediaUrl;
-  const type = msg.messageType;
   if (!url) {
     const pending = media.status === "pending";
     const Icon = { image: FileImage, video: Video, audio: Mic }[type] || FileText;
@@ -81,13 +80,23 @@ function MediaBlock({ msg }) {
 
 const MEDIA_TYPES = ["image", "video", "audio", "document", "sticker"];
 
+// A template / campaign message with a media header is saved as "[image] body…" + mediaUrl
+const TEMPLATE_HEADER = /^\[(image|video|document)\]\s*/i;
+function templateMediaType(msg) {
+  if (MEDIA_TYPES.includes(msg.messageType) || !/^https?:/.test(msg.mediaUrl || "")) return null;
+  const m = TEMPLATE_HEADER.exec(msg.content || "");
+  return m ? m[1].toLowerCase() : null;
+}
+
 export default function ChatBubble({ msg, me, onReply, onJump, highlighted }) {
   const out = msg.direction === "outgoing";
   const sender = out ? SENDER[msg.senderType] || SENDER.HUMAN : null;
   const senderLabel = msg.senderType === "HUMAN" && msg.senderUserId && msg.senderUserId === me ? "You" : msg.senderName || (msg.senderType === "SYSTEM" ? "Template / campaign" : "MWG team");
-  const hasMedia = MEDIA_TYPES.includes(msg.messageType);
+  const templateMedia = templateMediaType(msg);
+  const mediaType = templateMedia || msg.messageType;
+  const hasMedia = MEDIA_TYPES.includes(mediaType);
   const isReaction = msg.messageType === "reaction";
-  const text = hasMedia && /^\[(Voice Message|Audio|Video|Sticker)\]$/.test(msg.content || "") ? "" : msg.content;
+  const text = templateMedia ? msg.content.replace(TEMPLATE_HEADER, "") : hasMedia && /^\[(Voice Message|Audio|Video|Sticker)\]$/.test(msg.content || "") ? "" : msg.content;
   const replyBtn = msg.canReply && (
     <button type="button" onClick={() => onReply(msg)} className="rounded-full p-1 text-slate-500 opacity-0 transition hover:bg-white/70 group-hover:opacity-100 focus:opacity-100" aria-label="Reply">
       <Reply className="h-4 w-4" />
@@ -117,7 +126,7 @@ export default function ChatBubble({ msg, me, onReply, onJump, highlighted }) {
         ) : (
           <>
             {msg.replyTo && <ReplyQuote quote={msg.replyTo} onJump={() => onJump(msg.replyTo)} />}
-            {hasMedia && <MediaBlock msg={msg} />}
+            {hasMedia && <MediaBlock msg={msg} type={mediaType} />}
             {msg.messageType === "location" && <MapPin className="mb-0.5 inline h-3.5 w-3.5 text-red-500" />}
             {(text || !hasMedia) && <p className="whitespace-pre-wrap break-words px-0.5 leading-snug"><Linkified text={text || "—"} /></p>}
           </>
