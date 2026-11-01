@@ -32,7 +32,6 @@ export default function OverviewPage() {
         <Stat label="Unassigned" value={c.unassigned} tone={c.unassigned ? "text-amber-700" : ""} onClick={() => navigate("/control/unassigned")} />
         <Stat label="Assigned (open)" value={c.assigned} />
         <Stat label="New" value={c.new} />
-        <Stat label="Hot" value={c.hot} tone={c.hot ? "text-orange-600" : ""} onClick={() => navigate("/hot-leads")} />
         <Stat label="Qualified" value={c.qualified} />
         <Stat label="Meetings stage" value={c.meetings} onClick={() => navigate("/meetings")} />
         <Stat label="Proposal stage" value={c.proposals} onClick={() => navigate("/proposals")} />

@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { activeNavUrl, NAV_ACTIVE, NAV_IDLE } from "@/lib/activeNav";
 import { useSelector } from "react-redux";
 import {
-  LayoutDashboard, Users, Flame, MessagesSquare, CalendarClock, CalendarDays, FileText, IndianRupee,
+  LayoutDashboard, Users, MessagesSquare, CalendarClock, CalendarDays, FileText, IndianRupee,
   ListChecks, TrendingUp, UserCircle, Inbox, UsersRound, Table2, Timer, Gauge, Activity, BarChart3, Shuffle,
 } from "lucide-react";
 import {
@@ -11,13 +11,12 @@ import {
 } from "@/components/ui/sidebar";
 import { selectScope } from "@/app/authSlice";
 import { hasSalesRole } from "@/lib/roles";
-import { useConversationsQuery, useFollowUpsQuery, useLeadCountsQuery, usePaymentsQuery, useProposalsQuery } from "@/app/api";
+import { useConversationsQuery, useFollowUpsQuery, usePaymentsQuery, useProposalsQuery } from "@/app/api";
 
 // §6 — only what a salesperson needs; nothing from the admin dashboard
 const MAIN = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "My Leads", url: "/leads", icon: Users },
-  { title: "Hot Leads", url: "/hot-leads", icon: Flame, badge: "hot" },
   { title: "WhatsApp", url: "/whatsapp", icon: MessagesSquare, badge: "unread" },
   { title: "Follow-ups", url: "/follow-ups", icon: CalendarClock, badge: "overdue" },
   { title: "Meetings", url: "/meetings", icon: CalendarDays },
@@ -58,7 +57,6 @@ function Item({ item, badge, active }) {
 export function AppSidebar() {
   const scope = useSelector(selectScope);
   const isManager = hasSalesRole(scope, "MANAGER");
-  const { data } = useLeadCountsQuery(undefined, { pollingInterval: 0 });
   const { data: wa } = useConversationsQuery({ limit: 1 });
   const { data: fu } = useFollowUpsQuery({ view: "overdue" }, { pollingInterval: 120000 });
   const { data: pa } = usePaymentsQuery({ status: "verify", limit: 1 }, { skip: !isManager });
@@ -80,7 +78,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {MAIN.map((item) => <Item key={item.url} item={item} active={current === item.url} badge={item.badge === "hot" ? data?.counts?.hot || null : item.badge === "unread" ? wa?.counts?.unread || null : item.badge === "overdue" ? fu?.counts?.overdue || null : item.badge === "verify" ? pa?.counts?.verify || null : item.badge === "approval" ? prs?.counts?.approval || null : null} />)}
+              {MAIN.map((item) => <Item key={item.url} item={item} active={current === item.url} badge={item.badge === "unread" ? wa?.counts?.unread || null : item.badge === "overdue" ? fu?.counts?.overdue || null : item.badge === "verify" ? pa?.counts?.verify || null : item.badge === "approval" ? prs?.counts?.approval || null : null} />)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

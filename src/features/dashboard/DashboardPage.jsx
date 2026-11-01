@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
-  Sparkles, Flame, CalendarClock, AlertTriangle, CalendarDays, FileText, IndianRupee, Trophy, Wallet, PhoneCall, RefreshCw, Plus,
+  Sparkles, CalendarClock, AlertTriangle, CalendarDays, FileText, IndianRupee, Trophy, Wallet, PhoneCall, RefreshCw, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KpiCard, EmptyState } from "@/components/LeadBits";
+import { StageCounts } from "@/components/LeadFields";
 import { useDashboardQuery } from "@/app/api";
 import { selectScope } from "@/app/authSlice";
 import { hasSalesRole } from "@/lib/roles";
@@ -31,7 +32,6 @@ export default function DashboardPage() {
   const k = data?.kpis || {};
   const tiles = [
     { title: "New leads", value: k.newLeads, icon: Sparkles, tone: "indigo", filter: "new" },
-    { title: "Hot leads", value: k.hotLeads, icon: Flame, tone: "orange", filter: "hot" },
     { title: "Follow-ups today", value: k.followUpsToday, icon: CalendarClock, tone: "sky", filter: "", sort: "followup", hint: "incl. team next actions" },
     { title: "Overdue", value: k.overdue, icon: AlertTriangle, tone: "red", filter: "overdue" },
     { title: "Meetings today", value: k.meetingsToday, icon: CalendarDays, tone: "violet", filter: "meeting" },
@@ -61,6 +61,18 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         {tiles.map((t) => <KpiCard key={t.title} {...t} value={t.value ?? 0} onClick={() => go(t.filter, t.sort)} />)}
       </div>
+
+      {/* Open leads per stage — the stages the team set, so a call + stage change moves these numbers */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{view === "team" ? "Open leads by stage" : "My open leads by stage"}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StageCounts total={data?.totalAll ?? 0} stageCounts={data?.stageCounts}
+            onToggle={(s) => navigate(`${view === "team" ? "/control/leads" : "/leads"}?stages=${s}`)}
+            onClear={() => navigate(view === "team" ? "/control/leads" : "/leads")} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">

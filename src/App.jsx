@@ -47,7 +47,8 @@ export default function App() {
       <Route element={<Protected><AppLayout /></Protected>}>
         <Route index element={<Lazy><DashboardPage /></Lazy>} />
         <Route path="leads" element={<Lazy><LeadsPage key="my" mode="my" /></Lazy>} />
-        <Route path="hot-leads" element={<Lazy><LeadsPage key="hot" mode="hot" /></Lazy>} />
+        {/* Hot Leads is now the "AI band" filter on My Leads (never a count or a page of its own) */}
+        <Route path="hot-leads" element={<Navigate to="/leads" replace />} />
         <Route path="leads/:id" element={<Lazy><LeadDetailPage /></Lazy>} />
         <Route path="whatsapp" element={<Lazy><WhatsAppPage /></Lazy>} />
         <Route path="whatsapp/:id" element={<Lazy><WhatsAppPage /></Lazy>} />

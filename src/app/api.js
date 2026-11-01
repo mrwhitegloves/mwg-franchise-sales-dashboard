@@ -33,7 +33,7 @@ export const salesApi = baseApi.injectEndpoints({
     }),
     changeStatus: b.mutation({
       query: ({ id, ...body }) => ({ url: `/leads/${id}/status`, method: "POST", body }),
-      invalidatesTags: (r, e, { id }) => [{ type: "Lead", id }, ...LIST_TAGS, "Conversations", "Conversation", "Unassigned"],
+      invalidatesTags: (r, e, { id }) => [{ type: "Lead", id }, ...LIST_TAGS, "Tasks", "Conversations", "Conversation", "Unassigned"],   // a stage change also closes the lead's follow-ups
     }),
     // ── lead tags (the team's own labels) ────────────────
     tags: b.query({ query: () => "/tags", providesTags: ["Tags"] }),

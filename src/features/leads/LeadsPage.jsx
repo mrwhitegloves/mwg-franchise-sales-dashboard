@@ -14,7 +14,10 @@ import { FILTER_LABELS } from "@/lib/stages";
 import { LeadsTable } from "./LeadsTable";
 import { cn } from "@/lib/utils";
 
-const TABS = ["all", "new", "hot", "contacted", "qualified", "meeting", "proposal", "payment_pending", "won", "lost", "overdue"];
+// No "hot" tab: the AI band (mwgAI.band) is never counted on screen — it is the "AI band" filter below
+const TABS = ["all", "new", "contacted", "qualified", "meeting", "proposal", "payment_pending", "won", "lost", "overdue"];
+// The AI's view of a lead (mwgAI.band) — shown only when the person picks it
+const AI_BANDS = [["immediate", "Immediate"], ["hot", "Hot"], ["qualified", "Qualified (AI)"], ["nurture", "Nurture"], ["low", "Low intent"]];
 const SORTS = [["priority", "Call first"], ["recent", "Recent activity"], ["followup", "Next follow-up"], ["score", "Lead score"], ["value", "Value"], ["created", "Newest"]];
 const TITLES = {
   my: ["My Leads", "Franchise leads assigned to you"],
@@ -32,6 +35,7 @@ export default function LeadsPage({ mode = "my" }) {
   const list = (k) => (params.get(k) || "").split(",").filter(Boolean);
   const stages = list("stages");
   const tags = list("tags");
+  const bands = list("bands");
   const intent = params.get("intent") || "";
   const { data: meta } = useMetaQuery();
   const { data: tagData } = useTagsQuery();
@@ -58,7 +62,7 @@ export default function LeadsPage({ mode = "my" }) {
   const { data, isFetching, isLoading } = useLeadsQuery({
     mode: apiMode, ...(filter !== "all" && mode !== "hot" ? { filter } : {}), sort, page, limit: 25,
     ...(q.trim() ? { q: q.trim() } : {}), ...(mode === "team" && owner ? { owner } : {}),
-    ...(stages.length ? { stages: stages.join(",") } : {}), ...(tags.length ? { tags: tags.join(",") } : {}), ...(intent ? { pipeline: intent } : {}),
+    ...(stages.length ? { stages: stages.join(",") } : {}), ...(tags.length ? { tags: tags.join(",") } : {}), ...(bands.length ? { bands: bands.join(",") } : {}), ...(intent ? { pipeline: intent } : {}),
   });
   const toggleStage = (s) => update({ stages: (stages.includes(s) ? stages.filter((x) => x !== s) : [...stages, s]).join(","), page: 1 });
   const { data: countData } = useLeadCountsQuery(mode === "my" ? { mine: "1" } : mode === "team" && owner ? { owner } : {});
@@ -114,6 +118,8 @@ export default function LeadsPage({ mode = "my" }) {
         </Select>
         <MultiSelect label="Tag" className="w-44" value={tags} onChange={(v) => update({ tags: v.join(","), page: 1 })} emptyText="No tags yet — add one on a lead"
           options={(tagData?.tags || []).map((t) => ({ value: t.name, label: t.name, count: t.count }))} />
+        <MultiSelect label="AI band" className="w-44" value={bands} onChange={(v) => update({ bands: v.join(","), page: 1 })}
+          options={AI_BANDS.map(([value, label]) => ({ value, label }))} />
         <Select value={sort} onValueChange={(v) => update({ sort: v, page: 1 })}>
           <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
           <SelectContent>{SORTS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
