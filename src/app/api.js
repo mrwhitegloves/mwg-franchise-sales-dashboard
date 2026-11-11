@@ -2,6 +2,8 @@
 import { baseApi } from "./baseApi";
 
 const LIST_TAGS = ["Leads", "Counts", "Dashboard", "Unassigned", "Team"];
+// A KYC change also shows on the lead's "KYC & onboarding" tab, payments and revenue
+const KYC_CHANGED = ["Kyc", "Payments", "Revenue", "Dashboard"];
 
 export const salesApi = baseApi.injectEndpoints({
   endpoints: (b) => ({
@@ -159,7 +161,19 @@ export const salesApi = baseApi.injectEndpoints({
     verifyPayment: b.mutation({ query: ({ id, ...body }) => ({ url: `/payments/${id}/verify`, method: "POST", body }), invalidatesTags: ["Payments", "Lead", "Leads", "Dashboard", "Revenue"] }),
     leadOnboarding: b.query({ query: (leadId) => `/leads/${leadId}/onboarding`, providesTags: ["Payments"] }),
     // Unique franchise KYC link for a lead (never expires)
-    createKycLink: b.mutation({ query: ({ leadId, ...body }) => ({ url: `/leads/${leadId}/kyc-link`, method: "POST", body }), invalidatesTags: ["Payments", "Lead"] }),
+    createKycLink: b.mutation({ query: ({ leadId, ...body }) => ({ url: `/leads/${leadId}/kyc-link`, method: "POST", body }), invalidatesTags: ["Payments", "Lead", "Kyc"] }),
+    // ── Partner KYC Verification (same records as the admin dashboard's Franchise & Partner KYC) ──
+    kycList: b.query({ query: (params = {}) => ({ url: "/kyc", params }), providesTags: ["Kyc"] }),
+    kycWorkspace: b.query({ query: (id) => `/kyc/${id}/workspace`, providesTags: ["Kyc"] }),
+    kycForm: b.query({ query: (id) => `/kyc/${id}/form`, providesTags: ["Kyc"] }),
+    // body: plain object (status / remarks) or FormData (form fields + documents)
+    updateKycForm: b.mutation({ query: ({ id, body }) => ({ url: `/kyc/${id}/form`, method: "PUT", body }), invalidatesTags: KYC_CHANGED }),
+    updateKycDeal: b.mutation({ query: ({ id, ...body }) => ({ url: `/kyc/${id}/deal`, method: "PATCH", body }), invalidatesTags: KYC_CHANGED }),
+    addKycPayment: b.mutation({ query: ({ id, ...body }) => ({ url: `/kyc/${id}/payments`, method: "POST", body }), invalidatesTags: KYC_CHANGED }),
+    updateKycPayment: b.mutation({ query: ({ id, paymentId, ...body }) => ({ url: `/kyc/${id}/payments/${paymentId}`, method: "PATCH", body }), invalidatesTags: KYC_CHANGED }),
+    deleteKycPayment: b.mutation({ query: ({ id, paymentId }) => ({ url: `/kyc/${id}/payments/${paymentId}`, method: "DELETE" }), invalidatesTags: KYC_CHANGED }),
+    updateKycStep: b.mutation({ query: ({ id, step, ...body }) => ({ url: `/kyc/${id}/onboarding/${step}`, method: "PATCH", body }), invalidatesTags: KYC_CHANGED }),
+    addKycNote: b.mutation({ query: ({ id, text }) => ({ url: `/kyc/${id}/notes`, method: "POST", body: { text } }), invalidatesTags: [...KYC_CHANGED, "Lead"] }),
     revenue: b.query({ query: (params = {}) => ({ url: "/revenue", params }), providesTags: ["Revenue"] }),
     // ── notifications (FS10) ──────────────────────────────
     notifications: b.query({ query: (params = {}) => ({ url: "/notifications", params }), providesTags: ["Notifications"] }),
@@ -189,4 +203,6 @@ export const {
   useSendProposalMutation, useProposalOutcomeMutation, useDecideDiscountMutation, usePaymentsQuery, useLeadPaymentsQuery, useRequestPaymentMutation,
   useNotificationsQuery, useLazyNotificationsQuery, useReadNotificationMutation, useClearNotificationMutation, useNotificationPrefsQuery, useUpdateNotificationPrefsMutation,
   useSendPaymentLinkMutation, useCheckPaymentMutation, useSubmitProofMutation, useCancelPaymentMutation, useVerifyPaymentMutation, useLeadOnboardingQuery, useCreateKycLinkMutation, useRevenueQuery,
+  useKycListQuery, useKycWorkspaceQuery, useKycFormQuery, useUpdateKycFormMutation, useUpdateKycDealMutation, useAddKycPaymentMutation,
+  useUpdateKycPaymentMutation, useDeleteKycPaymentMutation, useUpdateKycStepMutation, useAddKycNoteMutation,
 } = salesApi;

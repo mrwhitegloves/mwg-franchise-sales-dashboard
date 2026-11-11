@@ -24,6 +24,8 @@ const MeetingsPage = lazy(() => import("@/features/work/MeetingsPage"));
 const SlaPage = lazy(() => import("@/features/control/SlaPage"));
 const ProposalsPage = lazy(() => import("@/features/deals/DealPages").then((m) => ({ default: m.ProposalsPage })));
 const PaymentsPage = lazy(() => import("@/features/deals/DealPages").then((m) => ({ default: m.PaymentsPage })));
+const KycListPage = lazy(() => import("@/features/kyc/KycListPage"));
+const KycWorkspacePage = lazy(() => import("@/features/kyc/KycWorkspacePage"));
 const RevenuePage = lazy(() => import("@/features/control/RevenuePage"));
 const OverviewPage = lazy(() => import("@/features/control/OverviewPage"));
 const PerformancePage = lazy(() => import("@/features/control/PerformancePage"));
@@ -56,6 +58,9 @@ export default function App() {
         <Route path="meetings" element={<Lazy><MeetingsPage /></Lazy>} />
         <Route path="proposals" element={<Lazy><ProposalsPage /></Lazy>} />
         <Route path="payments" element={<Lazy><PaymentsPage /></Lazy>} />
+        {/* Partner KYC Verification: executives see their own leads' KYCs, managers / admins all */}
+        <Route path="kyc" element={<Lazy><KycListPage /></Lazy>} />
+        <Route path="kyc/:id" element={<Lazy><KycWorkspacePage /></Lazy>} />
         <Route path="tasks" element={<Lazy><TasksPage /></Lazy>} />
         <Route path="performance" element={<Lazy><MyPerformancePage /></Lazy>} />
         <Route path="profile" element={<Lazy><ProfilePage /></Lazy>} />

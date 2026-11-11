@@ -3,7 +3,7 @@ import { activeNavUrl, NAV_ACTIVE, NAV_IDLE } from "@/lib/activeNav";
 import { useSelector } from "react-redux";
 import {
   LayoutDashboard, Users, MessagesSquare, CalendarClock, CalendarDays, FileText, IndianRupee,
-  ListChecks, TrendingUp, UserCircle, Inbox, UsersRound, Table2, Timer, Gauge, Activity, BarChart3, Shuffle,
+  ListChecks, TrendingUp, UserCircle, Inbox, UsersRound, Table2, Timer, Gauge, Activity, BarChart3, Shuffle, ShieldCheck,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { selectScope } from "@/app/authSlice";
 import { hasSalesRole } from "@/lib/roles";
-import { useConversationsQuery, useFollowUpsQuery, usePaymentsQuery, useProposalsQuery } from "@/app/api";
+import { useConversationsQuery, useFollowUpsQuery, useKycListQuery, usePaymentsQuery, useProposalsQuery } from "@/app/api";
 
 // §6 — only what a salesperson needs; nothing from the admin dashboard
 const MAIN = [
@@ -22,6 +22,7 @@ const MAIN = [
   { title: "Meetings", url: "/meetings", icon: CalendarDays },
   { title: "Proposals", url: "/proposals", icon: FileText, badge: "approval" },
   { title: "Payments", url: "/payments", icon: IndianRupee, badge: "verify" },
+  { title: "Partner KYC", url: "/kyc", icon: ShieldCheck, badge: "kyc" },
   { title: "Tasks", url: "/tasks", icon: ListChecks },
   { title: "My Performance", url: "/performance", icon: TrendingUp },
   { title: "Profile", url: "/profile", icon: UserCircle },
@@ -61,6 +62,8 @@ export function AppSidebar() {
   const { data: fu } = useFollowUpsQuery({ view: "overdue" }, { pollingInterval: 120000 });
   const { data: pa } = usePaymentsQuery({ status: "verify", limit: 1 }, { skip: !isManager });
   const { data: prs } = useProposalsQuery({ status: "approval", limit: 1 }, { skip: !isManager });
+  // KYCs the client submitted that still need a review (own leads for an executive, all for managers)
+  const { data: kycs } = useKycListQuery({ status: "pending", limit: 1 }, { pollingInterval: 300000 });
   const { pathname } = useLocation();
   const current = activeNavUrl(pathname, [...MAIN, ...(isManager ? CONTROL : [])].map((i) => i.url));
   return (
@@ -78,7 +81,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {MAIN.map((item) => <Item key={item.url} item={item} active={current === item.url} badge={item.badge === "unread" ? wa?.counts?.unread || null : item.badge === "overdue" ? fu?.counts?.overdue || null : item.badge === "verify" ? pa?.counts?.verify || null : item.badge === "approval" ? prs?.counts?.approval || null : null} />)}
+              {MAIN.map((item) => <Item key={item.url} item={item} active={current === item.url} badge={item.badge === "unread" ? wa?.counts?.unread || null : item.badge === "overdue" ? fu?.counts?.overdue || null : item.badge === "verify" ? pa?.counts?.verify || null : item.badge === "approval" ? prs?.counts?.approval || null : item.badge === "kyc" ? kycs?.counts?.pending || null : null} />)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

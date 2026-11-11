@@ -1,10 +1,11 @@
 // Franchise KYC links on a lead (owner request 2026-10-22).
 // The salesperson creates a unique KYC link (client name, city, plan, final amount incl. GST,
 // token already paid). The client opens it without login; the KYC stays mapped to this lead.
-// Payments, KYC review and onboarding are run by the admin team; this view follows them live.
+// Review, payments and onboarding: Partner KYC screen (/kyc/:id), same records as the admin dashboard.
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, Copy, Link2, Loader2, MessageCircle, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, CheckCircle2, Copy, Link2, Loader2, MessageCircle, Plus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -77,7 +78,10 @@ function DealCard({ lead, deal }) {
             {deal.submittedAt ? ` · KYC submitted ${dateTime(deal.submittedAt)}` : ""}
           </p>
         </div>
-        <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_STYLE[deal.status] || "bg-slate-100")}>KYC: {deal.statusLabel}</span>
+        <div className="flex items-center gap-2">
+          <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_STYLE[deal.status] || "bg-slate-100")}>KYC: {deal.statusLabel}</span>
+          <Button size="sm" variant="outline" asChild><Link to={`/kyc/${deal.id}`}><ShieldCheck className="mr-1 h-3.5 w-3.5" />Open in Partner KYC</Link></Button>
+        </div>
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
