@@ -23,9 +23,11 @@ export default function KycListPage() {
   const [status, setStatus] = useState("all");
   const [when, setWhen] = useState("any");
   const [custom, setCustom] = useState({ from: "", to: "" });
+  const [owner, setOwner] = useState("all");   // salesperson (Manager / Admin only)
   const range = useMemo(() => rangeOf(when, custom), [when, custom]);
   const { data, isLoading, isFetching, error, refetch } = useKycListQuery({
     page, limit: LIMIT, status, ...(search.trim() ? { search: search.trim() } : {}),
+    ...(owner !== "all" ? { owner } : {}),
     ...(range.from ? { from: range.from.toISOString() } : {}),
     ...(range.to ? { to: range.to.toISOString() } : {}),
   });
@@ -35,6 +37,10 @@ export default function KycListPage() {
   const counts = data?.counts || {};
   const summary = data?.summary || { totalDeal: 0, paid: 0, remaining: 0, deals: 0 };
   const own = data?.scope === "own";
+  const salespeople = data?.salespeople || [];
+  const unassignedCount = data?.unassignedCount || 0;
+  // Date filter = payment date (2026-11-12): the cards count only payments made in the period
+  const dated = !!summary.dated;
   const reset = () => setPage(1);
   const open = (k) => navigate(`/kyc/${k._id}`);
 
@@ -55,9 +61,9 @@ export default function KycListPage() {
       {/* Money summary (follows the filters) */}
       <div className="grid gap-3 sm:grid-cols-3">
         {[
-          { label: "Total franchise deals", value: rupee(summary.totalDeal), sub: `${summary.deals || 0} KYC record${summary.deals === 1 ? "" : "s"} (incl. GST)`, icon: Handshake, color: "text-foreground", bg: "bg-card" },
-          { label: "Amount paid", value: rupee(summary.paid), sub: summary.awaiting ? `+ ${rupee(summary.awaiting)} waiting for verification` : "Received and verified", icon: Wallet, color: "text-emerald-700", bg: "bg-emerald-50/60" },
-          { label: "Remaining (pending)", value: rupee(summary.remaining), sub: "Still to be collected", icon: Hourglass, color: "text-red-600", bg: "bg-red-50/60" },
+          { label: "Total franchise deals", value: rupee(summary.totalDeal), sub: dated ? `${summary.deals || 0} partner${summary.deals === 1 ? "" : "s"} who paid in this period (incl. GST)` : `${summary.deals || 0} KYC record${summary.deals === 1 ? "" : "s"} (incl. GST)`, icon: Handshake, color: "text-foreground", bg: "bg-card" },
+          { label: dated ? "Amount paid (in this period)" : "Amount paid", value: rupee(summary.paid), sub: `${dated ? "Payments made in the selected dates" : "Received and verified"}${summary.awaiting ? ` · + ${rupee(summary.awaiting)} waiting for verification` : ""}`, icon: Wallet, color: "text-emerald-700", bg: "bg-emerald-50/60" },
+          { label: "Remaining (pending)", value: rupee(summary.remaining), sub: dated ? "Still to collect from these partners (as of today)" : "Still to be collected", icon: Hourglass, color: "text-red-600", bg: "bg-red-50/60" },
         ].map((c) => (
           <div key={c.label} className={`rounded-xl border p-4 ${c.bg}`}>
             <div className="flex items-center justify-between">
@@ -84,6 +90,14 @@ export default function KycListPage() {
             <select value={when} onChange={(e) => { setWhen(e.target.value); reset(); }} className="h-9 rounded-md border bg-background px-3 text-sm">
               {DATE_PRESETS.map(([k, l]) => <option key={k} value={k}>When: {l}</option>)}
             </select>
+            {!own && (
+              <select value={owner} onChange={(e) => { setOwner(e.target.value); reset(); }} className="h-9 rounded-md border bg-background px-3 text-sm" title="Salesperson of the partner's lead">
+                <option value="all">All salespeople</option>
+                {salespeople.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.count})</option>)}
+                {unassignedCount > 0 && <option value="none">No salesperson ({unassignedCount})</option>}
+                {owner !== "all" && owner !== "none" && !salespeople.some((p) => p.id === owner) && <option value={owner}>Selected salesperson (0)</option>}
+              </select>
+            )}
             {when === "custom" && (
               <div className="flex items-center gap-2 text-xs">
                 <Input type="date" value={custom.from} onChange={(e) => { setCustom((c) => ({ ...c, from: e.target.value })); reset(); }} className="h-9 w-36" />
@@ -93,6 +107,12 @@ export default function KycListPage() {
             )}
             <p className="text-xs text-muted-foreground lg:ml-auto">{pagination.totalCount} record{pagination.totalCount === 1 ? "" : "s"}</p>
           </div>
+
+          {dated && (
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] text-emerald-800">
+              Date filter works on <b>payment dates</b>: only partners with a payment in these dates are listed, and <b>Amount paid</b> counts only the payments made in these dates.
+            </p>
+          )}
 
           {isLoading ? <PageSkeleton /> : error ? <p className="text-sm text-red-600">{errorText(error)}</p> : items.length === 0 ? (
             <EmptyState
@@ -110,7 +130,7 @@ export default function KycListPage() {
                       <th className="px-3 py-2">Client</th>
                       <th className="px-3 py-2">Plan · City</th>
                       <th className="px-3 py-2 text-right">Deal (incl. GST)</th>
-                      <th className="px-3 py-2 text-right">Paid</th>
+                      <th className="px-3 py-2 text-right">{dated ? "Paid in period" : "Paid"}</th>
                       <th className="px-3 py-2 text-right">Remaining</th>
                       <th className="px-3 py-2">KYC status</th>
                       <th className="min-w-[220px] px-3 py-2">Onboarding · next step</th>
@@ -133,7 +153,9 @@ export default function KycListPage() {
                             <p className="text-muted-foreground">{k.city || k.primaryOperatingCity || "—"}</p>
                           </td>
                           <td className="whitespace-nowrap px-3 py-2.5 text-right text-xs font-semibold">{rupee(m.dealAmount)}</td>
-                          <td className="whitespace-nowrap px-3 py-2.5 text-right text-xs font-semibold text-emerald-700">{rupee(m.paid)}</td>
+                          <td className="whitespace-nowrap px-3 py-2.5 text-right text-xs font-semibold text-emerald-700">
+                            {m.periodPaid != null ? <>{rupee(m.periodPaid)}<p className="text-[10px] font-normal text-muted-foreground">of {rupee(m.paid)} total</p></> : rupee(m.paid)}
+                          </td>
                           <td className={`whitespace-nowrap px-3 py-2.5 text-right text-xs font-bold ${m.remaining > 0 ? "text-red-600" : "text-muted-foreground"}`}>{rupee(m.remaining)}</td>
                           <td className="px-3 py-2.5"><StatusBadge status={k.kycStatus} /></td>
                           <td className="px-3 py-2.5 text-xs"><div className="mb-1"><Progress progress={k.progress} /></div><NextStep next={k.next} /></td>
@@ -163,7 +185,7 @@ export default function KycListPage() {
                         </div>
                         <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
                           <div><p className="text-[10px] text-muted-foreground">Deal</p><p className="font-semibold">{rupee(m.dealAmount)}</p></div>
-                          <div><p className="text-[10px] text-muted-foreground">Paid</p><p className="font-semibold text-emerald-700">{rupee(m.paid)}</p></div>
+                          <div><p className="text-[10px] text-muted-foreground">{m.periodPaid != null ? "Paid in period" : "Paid"}</p><p className="font-semibold text-emerald-700">{rupee(m.periodPaid ?? m.paid)}</p></div>
                           <div><p className="text-[10px] text-muted-foreground">Remaining</p><p className={`font-bold ${m.remaining > 0 ? "text-red-600" : ""}`}>{rupee(m.remaining)}</p></div>
                         </div>
                         <div className="mt-2"><Progress progress={k.progress} /></div>

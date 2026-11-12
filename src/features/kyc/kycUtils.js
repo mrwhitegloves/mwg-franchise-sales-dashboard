@@ -46,28 +46,7 @@ export const fileUrl = (path) => (!path ? "" : /^https?:/.test(path) ? path : `$
 export const isPdf = (url) => /\.pdf($|\?)/i.test(url || "");
 
 // "When" filter → { from, to } ISO strings
-export const DATE_PRESETS = [
-  ["any", "any time"],
-  ["today", "today"],
-  ["7d", "last 7 days"],
-  ["30d", "last 30 days"],
-  ["month", "this month"],
-  ["custom", "custom dates"],
-];
-export function rangeOf(when, custom = {}) {
-  const now = new Date();
-  const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
-  if (when === "today") return { from: startOfDay(now) };
-  if (when === "7d") return { from: startOfDay(new Date(now - 6 * 864e5)) };
-  if (when === "30d") return { from: startOfDay(new Date(now - 29 * 864e5)) };
-  if (when === "month") return { from: new Date(now.getFullYear(), now.getMonth(), 1) };
-  if (when === "custom") {
-    return {
-      ...(custom.from ? { from: new Date(`${custom.from}T00:00:00`) } : {}),
-      ...(custom.to ? { to: new Date(`${custom.to}T23:59:59`) } : {}),
-    };
-  }
-  return {};
-}
+// Date presets: the same list as the admin dashboard Partner KYC screen
+export { DATE_PRESETS, rangeOf } from "@/lib/dateRanges";
 
 export const selectClass = "h-9 w-full rounded-md border bg-background px-3 text-sm";
