@@ -21,6 +21,7 @@ import {
   useUpdateKycFormMutation, useUpdateKycPaymentMutation, useUpdateKycStepMutation,
 } from "@/app/api";
 import KycFormTab from "./KycFormTab";
+import PaymentInvoiceDialog from "./PaymentInvoiceDialog";
 import { KYC_STATUS, STEP_STYLE, daysSince, fullDateTime, nowLocal, rupee, selectClass, toLocalInput } from "./kycUtils";
 import { Field, NextStep, Section, StatusBadge } from "./KycBits";
 
@@ -329,6 +330,7 @@ const PAY_BADGE = (s) => (s === "VERIFIED" ? ["Received", "bg-emerald-100 text-e
 function PaymentsTab({ data }) {
   const canEdit = !!data.can?.editPayments;
   const [dialog, setDialog] = useState(null);   // null | { mode: 'add' } | { mode: 'edit', payment }
+  const [invoiceFor, setInvoiceFor] = useState(null);   // payment whose franchise invoice is open
   const [remove, { isLoading: deleting }] = useDeleteKycPaymentMutation();
   const m = data.money;
 
@@ -359,7 +361,7 @@ function PaymentsTab({ data }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="py-2">Date &amp; time</th><th className="text-right">Amount</th><th className="pl-3">How</th><th>Reference</th><th>Status</th><th>Added by</th><th>Note</th>{canEdit && <th />}
+                <th className="py-2">Date &amp; time</th><th className="text-right">Amount</th><th className="pl-3">How</th><th>Reference</th><th>Status</th><th>Added by</th><th>Note</th>{canEdit && <th />}<th className="text-right">Invoice</th>
               </tr>
             </thead>
             <tbody>
@@ -380,6 +382,7 @@ function PaymentsTab({ data }) {
                         <Button size="icon" variant="ghost" className="h-7 w-7 text-red-600" title="Delete" disabled={deleting} onClick={() => onDelete(p)}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </td>
                     )}
+                    <td className="whitespace-nowrap py-2 pl-2 text-right"><InvoiceButton invoice={p.invoice} onClick={() => setInvoiceFor(p)} /></td>
                   </tr>
                 );
               })}
@@ -389,7 +392,32 @@ function PaymentsTab({ data }) {
       )}
       {!canEdit && <p className="mt-3 text-[11px] text-muted-foreground">Only an Admin can edit or delete a payment.</p>}
       {dialog && <PaymentDialog key={dialog.payment?.id || "new"} data={data} dialog={dialog} onClose={() => setDialog(null)} />}
+      {invoiceFor && <PaymentInvoiceDialog kycId={data.kyc._id} payment={invoiceFor} onClose={() => setInvoiceFor(null)} />}
     </Section>
+  );
+}
+
+// Franchise invoice of a payment: Send / Sent ✓ / Failed — retry (same as the admin dashboard)
+function InvoiceButton({ invoice, onClick }) {
+  if (invoice?.status === "SENT") {
+    return (
+      <Button size="sm" variant="outline" onClick={onClick} title={`Sent ${fullDateTime(invoice.at)}${invoice.phone ? ` to +${invoice.phone}` : ""} — click to see it`}
+        className="h-8 gap-1 border-emerald-300 bg-emerald-50 text-xs text-emerald-800 hover:bg-emerald-100">
+        <CheckCircle2 className="h-3.5 w-3.5" />Invoice sent<span className="font-mono text-[10px] opacity-70">{invoice.invoiceNo}</span>
+      </Button>
+    );
+  }
+  if (invoice?.status === "FAILED") {
+    return (
+      <Button size="sm" variant="outline" onClick={onClick} title={invoice.error || "Not sent"} className="h-8 gap-1 border-red-300 bg-red-50 text-xs text-red-700 hover:bg-red-100">
+        <AlertTriangle className="h-3.5 w-3.5" />Not sent — retry
+      </Button>
+    );
+  }
+  return (
+    <Button size="sm" variant="outline" onClick={onClick} className="h-8 gap-1 text-xs">
+      <FileText className="h-3.5 w-3.5" />Send invoice
+    </Button>
   );
 }
 
@@ -402,6 +430,7 @@ function PaymentDialog({ data, dialog, onClose }) {
     reference: editing?.reference || "",
     note: editing?.note || "",
   });
+  const [sendInvoice, setSendInvoice] = useState(true);   // franchise invoice on WhatsApp right after saving
   const [add, { isLoading: adding }] = useAddKycPaymentMutation();
   const [update, { isLoading: updating }] = useUpdateKycPaymentMutation();
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -410,8 +439,17 @@ function PaymentDialog({ data, dialog, onClose }) {
     const body = { ...form, amount: Number(form.amount), paidAt: new Date(form.paidAt).toISOString() };
     try {
       if (editing) await update({ id: data.kyc._id, paymentId: editing.id, ...body, ...(editing.status !== "VERIFIED" ? { status: "VERIFIED" } : {}) }).unwrap();
-      else await add({ id: data.kyc._id, ...body }).unwrap();
-      toast.success(editing ? "Payment updated" : "Payment added");
+      else {
+        const r = await add({ id: data.kyc._id, ...body, sendInvoice }).unwrap();
+        toast.success("Payment added");
+        if (sendInvoice && r.invoice) {
+          if (r.invoice.status === "SENT") toast.success(`Invoice ${r.invoice.invoiceNo || ""} sent on WhatsApp`);
+          else toast.error(`Invoice not sent — ${r.invoice.error || "WhatsApp send failed"}. Use "Not sent — retry" in the payment row.`, { duration: 10000 });
+        }
+        onClose();
+        return;
+      }
+      toast.success("Payment updated");
       onClose();
     } catch (e) {
       toast.error(errorText(e, "Could not save the payment"));
@@ -434,6 +472,15 @@ function PaymentDialog({ data, dialog, onClose }) {
           <Field label="Note"><Textarea rows={2} value={form.note} onChange={(e) => set("note", e.target.value)} /></Field>
           {!editing && <p className="text-xs text-muted-foreground">Saved as received straight away (no approval), like in the admin dashboard.</p>}
           {editing && editing.status !== "VERIFIED" && <p className="text-xs text-amber-700">Saving marks this payment as received.</p>}
+          {!editing && (
+            <label className="flex cursor-pointer items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-2.5 text-sm">
+              <input type="checkbox" checked={sendInvoice} onChange={(e) => setSendInvoice(e.target.checked)} className="mt-0.5 h-4 w-4 accent-emerald-600" />
+              <span>
+                <b className="text-emerald-900">Send the invoice on WhatsApp</b>
+                <span className="block text-xs text-emerald-800">Right after saving, the franchise invoice of this payment goes to the partner's WhatsApp number{data.kyc.whatsAppNumber || data.kyc.mobileNumber ? ` (${data.kyc.whatsAppNumber || data.kyc.mobileNumber})` : ""}.</span>
+              </span>
+            </label>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>

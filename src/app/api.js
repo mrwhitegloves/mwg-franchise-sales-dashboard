@@ -171,6 +171,10 @@ export const salesApi = baseApi.injectEndpoints({
     updateKycDeal: b.mutation({ query: ({ id, ...body }) => ({ url: `/kyc/${id}/deal`, method: "PATCH", body }), invalidatesTags: KYC_CHANGED }),
     addKycPayment: b.mutation({ query: ({ id, ...body }) => ({ url: `/kyc/${id}/payments`, method: "POST", body }), invalidatesTags: KYC_CHANGED }),
     updateKycPayment: b.mutation({ query: ({ id, paymentId, ...body }) => ({ url: `/kyc/${id}/payments/${paymentId}`, method: "PATCH", body }), invalidatesTags: KYC_CHANGED }),
+    // Franchise invoice of a payment (same as the admin dashboard): what was sent, or the default draft
+    kycPaymentInvoice: b.query({ query: ({ id, paymentId }) => `/kyc/${id}/payments/${paymentId}/invoice`, keepUnusedDataFor: 0 }),
+    saveKycPaymentInvoice: b.mutation({ query: ({ id, paymentId, invoice }) => ({ url: `/kyc/${id}/payments/${paymentId}/invoice/save`, method: "POST", body: { invoice } }), invalidatesTags: KYC_CHANGED }),
+    sendKycPaymentInvoice: b.mutation({ query: ({ id, paymentId, invoice }) => ({ url: `/kyc/${id}/payments/${paymentId}/invoice/send`, method: "POST", body: { invoice } }), invalidatesTags: KYC_CHANGED }),
     deleteKycPayment: b.mutation({ query: ({ id, paymentId }) => ({ url: `/kyc/${id}/payments/${paymentId}`, method: "DELETE" }), invalidatesTags: KYC_CHANGED }),
     updateKycStep: b.mutation({ query: ({ id, step, ...body }) => ({ url: `/kyc/${id}/onboarding/${step}`, method: "PATCH", body }), invalidatesTags: KYC_CHANGED }),
     addKycNote: b.mutation({ query: ({ id, text }) => ({ url: `/kyc/${id}/notes`, method: "POST", body: { text } }), invalidatesTags: [...KYC_CHANGED, "Lead"] }),
@@ -205,4 +209,5 @@ export const {
   useSendPaymentLinkMutation, useCheckPaymentMutation, useSubmitProofMutation, useCancelPaymentMutation, useVerifyPaymentMutation, useLeadOnboardingQuery, useCreateKycLinkMutation, useRevenueQuery,
   useKycListQuery, useKycWorkspaceQuery, useKycFormQuery, useUpdateKycFormMutation, useUpdateKycDealMutation, useAddKycPaymentMutation,
   useUpdateKycPaymentMutation, useDeleteKycPaymentMutation, useUpdateKycStepMutation, useAddKycNoteMutation,
+  useKycPaymentInvoiceQuery, useSaveKycPaymentInvoiceMutation, useSendKycPaymentInvoiceMutation,
 } = salesApi;
