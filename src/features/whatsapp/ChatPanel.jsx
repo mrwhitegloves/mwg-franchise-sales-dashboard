@@ -2,6 +2,7 @@
 // demand), and the composer — text, files, templates, replies. Everything is sent
 // by the backend through the central Mr. White Gloves WhatsApp number (§25, §56).
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { enterSends, isTouchDevice } from "@/lib/enterToSend";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ArrowLeft, Send, Loader2, AlertCircle, Info, Paperclip, X, FileText, ShieldCheck, ExternalLink, ChevronUp, Sparkles, Brain } from "lucide-react";
@@ -286,9 +287,10 @@ export function ChatPanel({ conversationId, onBack }) {
               <Button variant={suggestOpen ? "secondary" : "ghost"} size="icon" className="h-10 w-10 shrink-0" onClick={() => setSuggestOpen((o) => !o)} disabled={sending} aria-label="What should I say next?" title="What should I say next? (AI suggestions)"><Sparkles className="h-5 w-5 text-sky-600" /></Button>
               <Textarea ref={inputRef} value={text} rows={1} disabled={sending}
                 onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } if (e.key === "Escape") setReplyTo(null); }}
+                onKeyDown={(e) => { if (enterSends(e)) { e.preventDefault(); submit(); } if (e.key === "Escape") setReplyTo(null); }}
                 onPaste={(e) => { const item = [...(e.clipboardData?.items || [])].find((i) => i.kind === "file"); if (item) { e.preventDefault(); pickFile(item.getAsFile()); } }}
                 placeholder={file ? "Add a caption (optional)" : "Type a message"}
+                enterKeyHint={isTouchDevice() ? "enter" : "send"}
                 className="min-h-[40px] resize-none py-2 leading-5" />
               <Button onClick={submit} disabled={(!text.trim() && !file) || sending} className="h-10 w-10 shrink-0 p-0" aria-label="Send">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
