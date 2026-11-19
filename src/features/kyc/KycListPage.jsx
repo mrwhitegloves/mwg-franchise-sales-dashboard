@@ -14,6 +14,7 @@ import { useKycListQuery } from "@/app/api";
 import { DATE_PRESETS, STATUS_FILTERS, fullDateTime, rangeOf, rupee } from "./kycUtils";
 import { NextStep, Progress, StatusBadge } from "./KycBits";
 
+import GstSplit from "@/components/GstSplit";
 const LIMIT = 15;
 
 export default function KycListPage() {
@@ -61,9 +62,9 @@ export default function KycListPage() {
       {/* Money summary (follows the filters) */}
       <div className="grid gap-3 sm:grid-cols-3">
         {[
-          { label: "Total franchise deals", value: rupee(summary.totalDeal), sub: dated ? `${summary.deals || 0} partner${summary.deals === 1 ? "" : "s"} who paid in this period (incl. GST)` : `${summary.deals || 0} KYC record${summary.deals === 1 ? "" : "s"} (incl. GST)`, icon: Handshake, color: "text-foreground", bg: "bg-card" },
-          { label: dated ? "Amount paid (in this period)" : "Amount paid", value: rupee(summary.paid), sub: `${dated ? "Payments made in the selected dates" : "Received and verified"}${summary.awaiting ? ` · + ${rupee(summary.awaiting)} waiting for verification` : ""}`, icon: Wallet, color: "text-emerald-700", bg: "bg-emerald-50/60" },
-          { label: "Remaining (pending)", value: rupee(summary.remaining), sub: dated ? "Still to collect from these partners (as of today)" : "Still to be collected", icon: Hourglass, color: "text-red-600", bg: "bg-red-50/60" },
+          { label: "Total franchise deals", value: rupee(summary.totalDeal), amount: summary.totalDeal, sub: dated ? `${summary.deals || 0} partner${summary.deals === 1 ? "" : "s"} who paid in this period (incl. GST)` : `${summary.deals || 0} KYC record${summary.deals === 1 ? "" : "s"} (incl. GST)`, icon: Handshake, color: "text-foreground", bg: "bg-card" },
+          { label: dated ? "Amount paid (in this period)" : "Amount paid", value: rupee(summary.paid), amount: summary.paid, sub: `${dated ? "Payments made in the selected dates" : "Received and verified"}${summary.awaiting ? ` · + ${rupee(summary.awaiting)} waiting for verification` : ""}`, icon: Wallet, color: "text-emerald-700", bg: "bg-emerald-50/60" },
+          { label: "Remaining (pending)", value: rupee(summary.remaining), amount: summary.remaining, sub: dated ? "Still to collect from these partners (as of today)" : "Still to be collected", icon: Hourglass, color: "text-red-600", bg: "bg-red-50/60" },
         ].map((c) => (
           <div key={c.label} className={`rounded-xl border p-4 ${c.bg}`}>
             <div className="flex items-center justify-between">
@@ -155,6 +156,7 @@ export default function KycListPage() {
                           <td className="whitespace-nowrap px-3 py-2.5 text-right text-xs font-semibold">{rupee(m.dealAmount)}</td>
                           <td className="whitespace-nowrap px-3 py-2.5 text-right text-xs font-semibold text-emerald-700">
                             {m.periodPaid != null ? <>{rupee(m.periodPaid)}<p className="text-[10px] font-normal text-muted-foreground">of {rupee(m.paid)} total</p></> : rupee(m.paid)}
+                            <GstSplit compact align="end" amount={m.periodPaid ?? m.paid} className="mt-0.5" />
                           </td>
                           <td className={`whitespace-nowrap px-3 py-2.5 text-right text-xs font-bold ${m.remaining > 0 ? "text-red-600" : "text-muted-foreground"}`}>{rupee(m.remaining)}</td>
                           <td className="px-3 py-2.5"><StatusBadge status={k.kycStatus} /></td>
@@ -185,7 +187,7 @@ export default function KycListPage() {
                         </div>
                         <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
                           <div><p className="text-[10px] text-muted-foreground">Deal</p><p className="font-semibold">{rupee(m.dealAmount)}</p></div>
-                          <div><p className="text-[10px] text-muted-foreground">{m.periodPaid != null ? "Paid in period" : "Paid"}</p><p className="font-semibold text-emerald-700">{rupee(m.periodPaid ?? m.paid)}</p></div>
+                          <div><p className="text-[10px] text-muted-foreground">{m.periodPaid != null ? "Paid in period" : "Paid"}</p><p className="font-semibold text-emerald-700">{rupee(m.periodPaid ?? m.paid)}</p><GstSplit compact amount={m.periodPaid ?? m.paid} /></div>
                           <div><p className="text-[10px] text-muted-foreground">Remaining</p><p className={`font-bold ${m.remaining > 0 ? "text-red-600" : ""}`}>{rupee(m.remaining)}</p></div>
                         </div>
                         <div className="mt-2"><Progress progress={k.progress} /></div>

@@ -25,6 +25,7 @@ import PaymentInvoiceDialog from "./PaymentInvoiceDialog";
 import { KYC_STATUS, STEP_STYLE, daysSince, fullDateTime, nowLocal, rupee, selectClass, toLocalInput } from "./kycUtils";
 import { Field, NextStep, Section, StatusBadge } from "./KycBits";
 
+import GstSplit from "@/components/GstSplit";
 export default function KycWorkspacePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -79,10 +80,10 @@ export default function KycWorkspacePage() {
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <MoneyBox label="Franchise amount (incl. GST)" value={rupee(money.dealAmount)} />
-          <MoneyBox label="Paid" value={rupee(money.paid)} tone="text-emerald-700" />
-          <MoneyBox label="Remaining" value={rupee(money.remaining)} tone={money.remaining > 0 ? "text-red-600" : "text-muted-foreground"} />
-          <MoneyBox label="Waiting for verification" value={rupee(money.awaiting)} tone="text-amber-700" />
+          <MoneyBox label="Franchise amount (incl. GST)" value={rupee(money.dealAmount)} amount={money.dealAmount} />
+          <MoneyBox label="Paid" value={rupee(money.paid)} amount={money.paid} tone="text-emerald-700" />
+          <MoneyBox label="Remaining" value={rupee(money.remaining)} amount={money.remaining} tone={money.remaining > 0 ? "text-red-600" : "text-muted-foreground"} />
+          <MoneyBox label="Waiting for verification" value={rupee(money.awaiting)} amount={money.awaiting} tone="text-amber-700" />
         </div>
       </div>
 
@@ -112,11 +113,12 @@ export default function KycWorkspacePage() {
   );
 }
 
-function MoneyBox({ label, value, tone = "text-foreground" }) {
+function MoneyBox({ label, value, tone = "text-foreground", amount, center = false }) {
   return (
     <div className="rounded-lg border bg-muted/30 p-3">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className={cn("text-lg font-extrabold", tone)}>{value}</p>
+      <GstSplit amount={amount} align={center ? "center" : "start"} />
     </div>
   );
 }
@@ -162,7 +164,7 @@ function OverviewTab({ data, onOpenTab }) {
         <Row label="Plan" value={kyc.franchisePlan} />
         <Row label="City" value={kyc.city} />
         <Row label="Franchise amount (incl. GST)" value={rupee(data.money.dealAmount)} />
-        <Row label="Paid" value={<span className="text-emerald-700">{rupee(data.money.paid)}</span>} />
+        <Row label="Paid" value={<span className="text-emerald-700">{rupee(data.money.paid)}<GstSplit compact align="end" amount={data.money.paid} /></span>} />
         <Row label="Remaining" value={<span className={data.money.remaining > 0 ? "text-red-600" : ""}>{rupee(data.money.remaining)}</span>} />
         <Row label="KYC link" value={link ? <span className="break-all text-xs font-normal text-blue-700">{link}</span> : "— (submitted without a link)"} />
         <Row label="Link created" value={kyc.invitedAt ? `${fullDateTime(kyc.invitedAt)}${kyc.invitedByName ? ` by ${kyc.invitedByName}` : ""}` : null} />
@@ -347,9 +349,9 @@ function PaymentsTab({ data }) {
   return (
     <Section title="Payment history" icon={IndianRupee} action={<Button size="sm" onClick={() => setDialog({ mode: "add" })}><Plus className="mr-1 h-3.5 w-3.5" />Add payment</Button>}>
       <div className="mb-4 grid grid-cols-3 gap-3 text-center">
-        <MoneyBox label="Franchise amount" value={rupee(m.dealAmount)} />
-        <MoneyBox label="Paid" value={rupee(m.paid)} tone="text-emerald-700" />
-        <MoneyBox label="Remaining" value={rupee(m.remaining)} tone={m.remaining > 0 ? "text-red-600" : "text-muted-foreground"} />
+        <MoneyBox label="Franchise amount" value={rupee(m.dealAmount)} amount={m.dealAmount} center />
+        <MoneyBox label="Paid" value={rupee(m.paid)} amount={m.paid} tone="text-emerald-700" center />
+        <MoneyBox label="Remaining" value={rupee(m.remaining)} amount={m.remaining} tone={m.remaining > 0 ? "text-red-600" : "text-muted-foreground"} center />
       </div>
       {m.dealAmount > 0 && (
         <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -370,7 +372,7 @@ function PaymentsTab({ data }) {
                 return (
                   <tr key={p.id} className="border-b align-top last:border-0">
                     <td className="whitespace-nowrap py-2 text-xs">{fullDateTime(p.paidAt)}<span className="block font-mono text-[10px] text-muted-foreground">{p.number}</span></td>
-                    <td className="text-right font-semibold">{rupee(p.amount)}</td>
+                    <td className="text-right font-semibold">{rupee(p.amount)}<GstSplit compact align="end" amount={p.amount} className="mt-0.5" /></td>
                     <td className="pl-3 text-xs">{p.methodLabel}</td>
                     <td className="text-xs">{p.reference || "—"}</td>
                     <td><span className={cn("whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium", color)}>{label}</span></td>
