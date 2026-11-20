@@ -28,6 +28,7 @@ import { EditLeadSheet } from "./EditLeadSheet";
 import { IntentBadge, LeadTagsEditor } from "@/components/LeadFields";
 import { LostDialog, ReassignDialog, StageDialog } from "./LeadActions";
 import { cn } from "@/lib/utils";
+import CityDemandHint from "@/features/demand/CityDemandHint";
 
 // FS07: §22 qualification details + §30 conversation summary (same panel as next to the chat)
 function LeadInsightsCard({ leadId }) {
@@ -97,6 +98,7 @@ export default function LeadDetailPage() {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <a href={telLink(lead.phone)} className="inline-flex items-center gap-1 hover:text-primary"><Phone className="h-3.5 w-3.5" />{prettyPhone(lead.phone)}</a>
               <span>{[lead.city, lead.state].filter(Boolean).join(", ") || "—"}</span>
+              <CityDemandHint city={lead.city} />
               <span>{lead.source}</span>
               <span>Owner: <b className="text-foreground">{lead.owner?.name || "Unassigned"}</b>{lead.assignmentMethod ? ` (${lead.assignmentMethod.replace(/_/g, " ").toLowerCase()})` : ""}</span>
               {lead.opportunityValue ? <span>Value: <b className="text-foreground">{inr(lead.opportunityValue)}</b>{lead.opportunityPlan ? ` · ${lead.opportunityPlan}` : ""}</span> : null}

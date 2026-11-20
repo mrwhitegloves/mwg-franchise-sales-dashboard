@@ -165,6 +165,10 @@ export const salesApi = baseApi.injectEndpoints({
     // ── Partner KYC Verification (same records as the admin dashboard's Franchise & Partner KYC) ──
     kycList: b.query({ query: (params = {}) => ({ url: "/kyc", params }), providesTags: ["Kyc"] }),
     kycWorkspace: b.query({ query: (id) => `/kyc/${id}/workspace`, providesTags: ["Kyc"] }),
+    // Service Zones Z7: franchise city zone + customer demand by city (counts only)
+    kycZone: b.query({ query: (id) => `/kyc/${id}/zone`, providesTags: ["Kyc"] }),
+    cityDemand: b.query({ query: (days = 365) => ({ url: "/demand", params: { days } }), keepUnusedDataFor: 300 }),
+    placeInfo: b.query({ query: ({ city, pincode }) => ({ url: "/place-info", params: { city, pincode } }), keepUnusedDataFor: 300 }),
     kycForm: b.query({ query: (id) => `/kyc/${id}/form`, providesTags: ["Kyc"] }),
     // body: plain object (status / remarks) or FormData (form fields + documents)
     updateKycForm: b.mutation({ query: ({ id, body }) => ({ url: `/kyc/${id}/form`, method: "PUT", body }), invalidatesTags: KYC_CHANGED }),
@@ -190,6 +194,7 @@ export const salesApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useKycZoneQuery, useCityDemandQuery, usePlaceInfoQuery,
   useLoginMutation, useMeQuery, useLogoutMutation, useMetaQuery,
   useDashboardQuery, useLeadsQuery, useLeadCountsQuery, useLazySearchQuery, useLeadQuery, useActivitiesQuery, useAssignmentHistoryQuery,
   useCheckDuplicateMutation, useCreateLeadMutation, useUpdateLeadMutation, useChangeStatusMutation, useAddNoteMutation,

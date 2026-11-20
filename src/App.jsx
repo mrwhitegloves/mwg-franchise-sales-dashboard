@@ -26,6 +26,7 @@ const ProposalsPage = lazy(() => import("@/features/deals/DealPages").then((m) =
 const PaymentsPage = lazy(() => import("@/features/deals/DealPages").then((m) => ({ default: m.PaymentsPage })));
 const KycListPage = lazy(() => import("@/features/kyc/KycListPage"));
 const KycWorkspacePage = lazy(() => import("@/features/kyc/KycWorkspacePage"));
+const CityDemandPage = lazy(() => import("@/features/demand/CityDemandPage"));
 const RevenuePage = lazy(() => import("@/features/control/RevenuePage"));
 const OverviewPage = lazy(() => import("@/features/control/OverviewPage"));
 const PerformancePage = lazy(() => import("@/features/control/PerformancePage"));
@@ -61,6 +62,8 @@ export default function App() {
         {/* Partner KYC Verification: executives see their own leads' KYCs, managers / admins all */}
         <Route path="kyc" element={<Lazy><KycListPage /></Lazy>} />
         <Route path="kyc/:id" element={<Lazy><KycWorkspacePage /></Lazy>} />
+        {/* Service Zones Z7: customers waiting per city (counts only) */}
+        <Route path="city-demand" element={<Lazy><CityDemandPage /></Lazy>} />
         <Route path="tasks" element={<Lazy><TasksPage /></Lazy>} />
         <Route path="performance" element={<Lazy><MyPerformancePage /></Lazy>} />
         <Route path="profile" element={<Lazy><ProfilePage /></Lazy>} />

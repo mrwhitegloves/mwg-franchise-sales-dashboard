@@ -26,6 +26,7 @@ import { KYC_STATUS, STEP_STYLE, daysSince, fullDateTime, nowLocal, rupee, selec
 import { Field, NextStep, Section, StatusBadge } from "./KycBits";
 
 import GstSplit from "@/components/GstSplit";
+import KycZoneStrip from "./KycZoneStrip";
 export default function KycWorkspacePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -85,6 +86,7 @@ export default function KycWorkspacePage() {
           <MoneyBox label="Remaining" value={rupee(money.remaining)} amount={money.remaining} tone={money.remaining > 0 ? "text-red-600" : "text-muted-foreground"} />
           <MoneyBox label="Waiting for verification" value={rupee(money.awaiting)} amount={money.awaiting} tone="text-amber-700" />
         </div>
+        <KycZoneStrip id={id} />
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>

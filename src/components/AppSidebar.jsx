@@ -3,7 +3,7 @@ import { activeNavUrl, NAV_ACTIVE, NAV_IDLE } from "@/lib/activeNav";
 import { useSelector } from "react-redux";
 import {
   LayoutDashboard, Users, MessagesSquare, CalendarClock, CalendarDays, FileText, IndianRupee,
-  ListChecks, TrendingUp, UserCircle, Inbox, UsersRound, Table2, Timer, Gauge, Activity, BarChart3, Shuffle, ShieldCheck,
+  ListChecks, TrendingUp, UserCircle, Inbox, UsersRound, Table2, Timer, Gauge, Activity, BarChart3, Shuffle, ShieldCheck, MapPinned,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu,
@@ -23,6 +23,7 @@ const MAIN = [
   { title: "Proposals", url: "/proposals", icon: FileText, badge: "approval" },
   { title: "Payments", url: "/payments", icon: IndianRupee, badge: "verify" },
   { title: "Partner KYC", url: "/kyc", icon: ShieldCheck, badge: "kyc" },
+  { title: "City demand", url: "/city-demand", icon: MapPinned },
   { title: "Tasks", url: "/tasks", icon: ListChecks },
   { title: "My Performance", url: "/performance", icon: TrendingUp },
   { title: "Profile", url: "/profile", icon: UserCircle },
